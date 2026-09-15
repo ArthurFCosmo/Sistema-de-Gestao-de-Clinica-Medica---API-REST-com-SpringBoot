@@ -3,7 +3,6 @@ CREATE TABLE tb_consultas (
     data_hora DATETIME NOT NULL,
     status VARCHAR(20) NOT NULL,
     observacoes VARCHAR(255),
-
     id_medico BIGINT NOT NULL,
     id_paciente BIGINT NOT NULL,
 
