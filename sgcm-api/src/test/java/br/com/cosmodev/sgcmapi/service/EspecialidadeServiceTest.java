@@ -6,6 +6,7 @@ import br.com.cosmodev.sgcmapi.model.Especialidade;
 import br.com.cosmodev.sgcmapi.repository.EspecialidadeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -21,6 +22,8 @@ public class EspecialidadeServiceTest {
 
     @InjectMocks
     private EspecialidadeService especialidadeService;
+
+    // TESTANDO MÉTODOS DE CONVERSÃO DE ENTIDADES ----------------------------------------------------------------------
 
     @Test
     void deveConverterDtoParaModelComSucesso() {
@@ -58,9 +61,12 @@ public class EspecialidadeServiceTest {
 
     }
 
+    // TESTANDO MÉTODOS PADRÃO DO CRUD ---------------------------------------------------------------------------------
+
     @Test
     void deveSalvarEspecialidadeComSucesso() {
 
+        // Preparação
         EspecialidadeRequestDto requestDtoFalsaCorreta = new EspecialidadeRequestDto(
                 "Cardiologista",
                 "Especialista na saúde do coração e do sistema circulatório."
@@ -74,8 +80,10 @@ public class EspecialidadeServiceTest {
 
         when(especialidadeRepository.save(any(Especialidade.class))).thenReturn(especialidadeSalvaFalsa);
 
+        // Execução: Deve retornar corretamente um ResponseDto baseado na request
         EspecialidadeResponseDto resultado= especialidadeService.salvarEspecialidade(requestDtoFalsaCorreta);
 
+        // Confirmação
         assertAll(
                 () -> assertNotNull(resultado),
                 () -> assertEquals(1, resultado.id()),
@@ -85,6 +93,5 @@ public class EspecialidadeServiceTest {
 
         verify(especialidadeRepository, times(1)).save(any(Especialidade.class));
     }
-
-    // todo: Método que testa o conteúdo do DTO de resposta do save()
+    
 }
