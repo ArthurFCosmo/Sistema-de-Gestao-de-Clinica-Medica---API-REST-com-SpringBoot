@@ -61,6 +61,30 @@ Cada entidade possui camada completa de CRUD (criar, listar, buscar por ID, atua
 
 ---
 
+## 📸 Demonstrações da codificação
+
+### Estrutura de diretórios
+
+![Estrutura de diretórios](IMAGENS/EstruturaDeDiretoriosDEMO.png)
+
+### Migrations
+
+![Migrations](IMAGENS/MigrationsDEMO.png)
+
+### DTO's + Validação
+
+![DTOs e Validação](IMAGENS/DTOsValidationDEMO.png)
+
+### Testes unitários
+
+![Testes Unitários](IMAGENS/TestesUnitariosDEMO.png)
+
+### Services
+
+![Services](IMAGENS/CamadaServiceDEMO.png)
+
+---
+
 ## 👤 Sobre o desenvolvedor
 
 Desenvolvido por **Arthur Cosmo**, desenvolvedor em formação com base sólida em **Java e Orientação a Objetos** (encapsulamento, herança, polimorfismo, interfaces), atualmente aprofundando conhecimento em **Spring Boot, testes automatizados e arquitetura de APIs REST**.
