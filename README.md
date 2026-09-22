@@ -87,7 +87,7 @@ Cada entidade possui camada completa de CRUD (criar, listar, buscar por ID, atua
 
 ## 👤 Sobre o desenvolvedor
 
-Desenvolvido por **Arthur Cosmo**, desenvolvedor em formação com base sólida em **Java e Orientação a Objetos** (encapsulamento, herança, polimorfismo, interfaces), atualmente aprofundando conhecimento em **Spring Boot, testes automatizados e arquitetura de APIs REST**.
+Desenvolvido por **Arthur Cosmo**, desenvolvedor com base sólida em **Java e Orientação a Objetos** (encapsulamento, herança, polimorfismo, interfaces) e APIs REST com Spring Boot, atualmente aprofundando conhecimento em **Testes automatizados e segurança de APIs REST**.
 
 Este projeto reflete um processo de aprendizado ativo e documentado: cada decisão técnica — do versionamento de schema com Flyway à separação em DTOs — foi tomada de forma consciente, utilizando conhecimentos adquiridos em meus estudos sobre desenvolvimento de software, não é um projeto copiado de tutoriais.
 
