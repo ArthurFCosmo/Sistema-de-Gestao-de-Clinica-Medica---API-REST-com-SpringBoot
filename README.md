@@ -63,23 +63,23 @@ Cada entidade possui camada completa de CRUD (criar, listar, buscar por ID, atua
 
 ## 📸 Demonstrações da codificação
 
-### Estrutura de diretórios
+### 📂 Estrutura de diretórios
 
 ![Estrutura de diretórios](IMAGENS/EstruturaDeDiretoriosDEMO.png)
 
-### Migrations
+### ⚪ Migrations
 
 ![Migrations](IMAGENS/MigrationsDEMO.png)
 
-### DTO's + Validação
+### ⚪ DTO's + Validação
 
 ![DTOs e Validação](IMAGENS/DTOsValidationDEMO.png)
 
-### Testes unitários
+### ⚪ Testes unitários
 
 ![Testes Unitários](IMAGENS/TestesUnitariosDEMO.png)
 
-### Services
+### ⚪ Services
 
 ![Services](IMAGENS/CamadaServiceDEMO.png)
 
