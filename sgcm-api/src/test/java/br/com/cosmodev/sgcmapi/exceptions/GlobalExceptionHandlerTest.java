@@ -44,7 +44,6 @@ public class GlobalExceptionHandlerTest {
                 () -> assertEquals("http://localhost:8080/especialidades/999", resultado.getBody().path()) // Confirma o endereço endpoint
         );
 
-
     }
 
 }

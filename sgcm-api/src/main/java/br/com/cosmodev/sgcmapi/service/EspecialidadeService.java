@@ -8,6 +8,8 @@ import br.com.cosmodev.sgcmapi.repository.EspecialidadeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +32,33 @@ public class EspecialidadeService {
                 () -> new ElementoNaoEncontradoException("Não foi encontrada especialidade com o id " + id)
         );
 
-
         return converterParaResponseDto(especialidade);
+    }
+
+    public List<EspecialidadeResponseDto> listarEspecialidades() {
+        return especialidadeRepository.findAll().stream().map(this::converterParaResponseDto).toList();
+    }
+
+    public void deletarEspecialidade(Long id) {
+
+        // Busca especialidade no banco, se não encontrar, lança uma exception custom
+        Especialidade especialidade = especialidadeRepository.findById(id).orElseThrow(
+                () -> new ElementoNaoEncontradoException("Não foi encontrada especialidade com o id " + id)
+        );
+
+        // todo: especialidade não pode ser excluída se tiver médicos vinculados a ela
+
+        especialidadeRepository.deleteById(id);
+    }
+
+    public EspecialidadeResponseDto atualizarEspecialidade(Long id, EspecialidadeRequestDto dto) {
+
+        especialidadeRepository.findById(id).orElseThrow(
+                () -> new ElementoNaoEncontradoException("Não foi encontrada especialidade com o id " + id)
+        );
+
+        return converterParaResponseDto(especialidadeRepository.save(converterParaModel(id, dto)));
+
     }
 
     // MÉTODOS DE CONVERSÃO DE ENTIDADES -------------------------------------------------------------------------------
@@ -44,6 +71,15 @@ public class EspecialidadeService {
         );
     }
 
+    // Polimorfismo usado para pode definir o ID da entidade na hora de atualizar no BD
+    Especialidade converterParaModel(Long id, EspecialidadeRequestDto dto) {
+        return new Especialidade(
+                id,
+                dto.nome(),
+                dto.descricao()
+        );
+    }
+
     EspecialidadeResponseDto converterParaResponseDto(Especialidade model) {
         return new EspecialidadeResponseDto(
                 model.getId(),
@@ -51,5 +87,5 @@ public class EspecialidadeService {
                 model.getDescricao()
         );
     }
-    
+
 }
