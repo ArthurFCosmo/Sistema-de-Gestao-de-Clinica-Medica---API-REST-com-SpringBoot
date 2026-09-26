@@ -19,7 +19,7 @@ public class EspecialidadeService {
 
     private final EspecialidadeRepository especialidadeRepository;
 
-    // MÉTODOS PADRÃO DO CRUD  -----------------------------------------------------------------------------------------
+    // MÉTODOS PADRÃO DO CRUD ------------------------------------------------------------------------------------------
 
     public EspecialidadeResponseDto salvarEspecialidade(EspecialidadeRequestDto dto) {
         return converterParaResponseDto(especialidadeRepository.save(converterParaModel(dto)));
@@ -42,7 +42,7 @@ public class EspecialidadeService {
     public void deletarEspecialidade(Long id) {
 
         // Busca especialidade no banco, se não encontrar, lança uma exception custom
-        Especialidade especialidade = especialidadeRepository.findById(id).orElseThrow(
+        especialidadeRepository.findById(id).orElseThrow(
                 () -> new ElementoNaoEncontradoException("Não foi encontrada especialidade com o id " + id)
         );
 
@@ -71,7 +71,7 @@ public class EspecialidadeService {
         );
     }
 
-    // Polimorfismo usado para pode definir o ID da entidade na hora de atualizar no BD
+    // Sobrecarga usada para poder definir o ID da entidade na hora de atualizar no BD
     Especialidade converterParaModel(Long id, EspecialidadeRequestDto dto) {
         return new Especialidade(
                 id,

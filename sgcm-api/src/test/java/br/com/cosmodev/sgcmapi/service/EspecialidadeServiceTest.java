@@ -219,6 +219,7 @@ public class EspecialidadeServiceTest {
         especialidadeService.deletarEspecialidade(id);
 
         // Confirmação: Se o métodó do repository foi chamado
+        verify(especialidadeRepository, times(1)).findById(id);
         verify(especialidadeRepository, times(1)).deleteById(id);
 
     }
@@ -292,6 +293,11 @@ public class EspecialidadeServiceTest {
     @Test
     void deveLancarExceptionAoNaoEncontrarEspecialdiadeParaAtualizar() {
 
+        // Preparação: Dto recebido na requisição
+        EspecialidadeRequestDto requestDtoCorretaMock = new EspecialidadeRequestDto(
+                "Cardiologista",
+                "Especialista na saúde do coração e do sistema circulatório."
+        );
 
         // Preparação: Retornando valor vazio para busca no BD usando a classe Optional padrão do repository
         when(especialidadeRepository.findById(999L)).thenReturn(Optional.empty());
@@ -299,7 +305,7 @@ public class EspecialidadeServiceTest {
         // Confirmação: Validando se o métodó lança a exception
         ElementoNaoEncontradoException excecao = assertThrows(
                 ElementoNaoEncontradoException.class,
-                () -> especialidadeService.atualizarEspecialidade(999L, any(EspecialidadeRequestDto.class))
+                () -> especialidadeService.atualizarEspecialidade(999L, requestDtoCorretaMock)
         );
 
         // Confirmação: Validando se a exception foi montada com a mensagem correta (Que é o único parâmetro legível antes do tratamento)
