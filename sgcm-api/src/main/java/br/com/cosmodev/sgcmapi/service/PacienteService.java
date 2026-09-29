@@ -2,10 +2,13 @@ package br.com.cosmodev.sgcmapi.service;
 
 import br.com.cosmodev.sgcmapi.dtos.PacienteRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.PacienteResponseDto;
+import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
 import br.com.cosmodev.sgcmapi.model.Paciente;
 import br.com.cosmodev.sgcmapi.repository.PacienteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 import static br.com.cosmodev.sgcmapi.service.UtilsSgcm.*;
 
@@ -16,6 +19,26 @@ public class PacienteService {
 
     // INJEÇÃO DE DEPENDÊNCIAS -----------------------------------------------------------------------------------------
     private final PacienteRepository pacienteRepository;
+
+    // MÉTODOS PADRÃO DO CRUD ------------------------------------------------------------------------------------------
+
+    public PacienteResponseDto salvarPaciente(PacienteRequestDto dto) {
+        return converterParaResponseDto(pacienteRepository.save(converterParaModel(dto)));
+    }
+
+    public PacienteResponseDto buscarPacientePorId(Long id) {
+        Paciente paciente = pacienteRepository.findById(id).orElseThrow(
+                () -> new ElementoNaoEncontradoException("Não foi encontrado paciente com o id " + id)
+        );
+
+        return converterParaResponseDto(paciente);
+    }
+
+    public List<PacienteResponseDto> listarPacientes() {
+        return pacienteRepository.findAll().stream().map(this::converterParaResponseDto).toList();
+    }
+
+
 
     // MÉTODOS DE CONVERSÃO DE ENTIDADES -------------------------------------------------------------------------------
 
