@@ -1,8 +1,10 @@
 package br.com.cosmodev.sgcmapi.service;
 
+import br.com.cosmodev.sgcmapi.dtos.EspecialidadeRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.PacienteRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.PacienteResponseDto;
 import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
+import br.com.cosmodev.sgcmapi.model.Especialidade;
 import br.com.cosmodev.sgcmapi.model.Paciente;
 import br.com.cosmodev.sgcmapi.repository.PacienteRepository;
 import org.junit.jupiter.api.Test;
@@ -12,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -266,6 +269,152 @@ public class PacienteServiceTest {
         );
 
         verify(pacienteRepository, times(1)).findAll();
+
+    }
+
+    @Test
+    void deveListarZeroPacientes() {
+
+        // Preparação
+        List<Paciente> listaVazia = new ArrayList<>();
+
+        when(pacienteRepository.findAll()).thenReturn(listaVazia);
+
+        // Execução
+        List<PacienteResponseDto> resultado = pacienteService.listarPacientes();
+
+        // Confirmação
+        assertAll(
+                () -> assertNotNull(resultado),
+                () -> assertTrue(resultado.isEmpty())
+        );
+
+        verify(pacienteRepository, times(1)).findAll();
+    }
+
+    @Test
+    void deveDeletarPacienteComSucessoQuandoExistir() {
+
+        // Preparação
+        LocalDate dataNascimento = LocalDate.of(1990, 5, 20);
+        Paciente pacienteModelFalsoCorreto = new Paciente(
+                1L,
+                "Arthur Cosmo",
+                "12345678909",
+                "arthur@email.com",
+                "11999999999",
+                dataNascimento,
+                true
+        );
+
+        when(pacienteRepository.findById(any(Long.class))).thenReturn(Optional.of(pacienteModelFalsoCorreto));
+
+        // Execução
+        pacienteService.deletarPaciente(1L);
+
+        // Confirmação
+        verify(pacienteRepository, times(1)).findById(1L);
+        verify(pacienteRepository, times(1)).deleteById(1L);
+
+    }
+
+    @Test
+    void deveLancarExceptionCasoNaoEncontrePacienteParaDeletar() {
+
+        when(pacienteRepository.findById(any(Long.class))).thenReturn(Optional.empty());
+
+        ElementoNaoEncontradoException exception = assertThrows(
+                ElementoNaoEncontradoException.class,
+                () -> pacienteService.deletarPaciente(999L)
+        );
+
+        assertEquals("Não foi encontrado paciente com o id 999", exception.getMessage());
+
+    }
+
+    @Test
+    void deveAtualizarPacienteComSucesso() {
+
+        // Preparação: Dto recebido na requisição
+        LocalDate dataNascimento = LocalDate.of(1990, 5, 20);
+        PacienteRequestDto requestDtoFalsaCorreta = new PacienteRequestDto(
+                "Arthur Silva",
+                "12345678900",
+                "arthursilva@email.com",
+                "(11) 99999-9999",
+                dataNascimento
+        );
+
+
+        // Preparação: Mock do paciente salvo no banco
+        Paciente pacienteModelFalsoCorreto = new Paciente(
+                1L,
+                "Arthur Cosmo",
+                "12345678909",
+                "arthur@email.com",
+                "11999999999",
+                dataNascimento,
+                true
+        );
+
+        // Preparação: Mock da especialidade que será salva no banco após o métodó ser executado
+        Paciente pacienteModelFalsoCorretoNovo = new Paciente(
+                1L,
+                "Arthur Silva",
+                "12345678900",
+                "arthursilva@email.com",
+                "11999999999",
+                dataNascimento,
+                false
+        );
+
+        Long id = 1L;
+        Boolean ativo = false;
+
+        when(pacienteRepository.findById(any(Long.class))).thenReturn(Optional.of(pacienteModelFalsoCorreto));
+
+        when(pacienteRepository.save(any(Paciente.class))).thenReturn(pacienteModelFalsoCorretoNovo);
+
+        // Execução
+        PacienteResponseDto resultado = pacienteService.atualizarPaciente(id, requestDtoFalsaCorreta, ativo);
+
+        // Confirmação
+        assertAll(
+                () -> assertEquals(1L, resultado.id()),
+                () -> assertEquals("Arthur Silva", resultado.nome()),
+                () -> assertEquals("123.***.***-**", resultado.cpfMascarado()),
+                () -> assertEquals("arthursilva@email.com", resultado.email()),
+                () -> assertEquals("(11) 99999-9999", resultado.telefone()),
+                () -> assertEquals(36, resultado.idade()),
+                () -> assertEquals(false, resultado.ativo())
+        );
+
+        verify(pacienteRepository, times(1)).findById(id);
+        verify(pacienteRepository, times(1)).save(pacienteModelFalsoCorretoNovo);
+
+    }
+
+    @Test
+    void deveLancarExceptionAoNaoEncontrarPacienteParaAtualizar() {
+
+        // Preparação: DTO recebido na requisição
+        LocalDate dataNascimento = LocalDate.of(1990, 5, 20);
+        PacienteRequestDto requestDtoFalsaCorreta = new PacienteRequestDto(
+                "Arthur Silva",
+                "12345678900",
+                "arthursilva@email.com",
+                "(11) 99999-9999",
+                dataNascimento
+        );
+
+        when(pacienteRepository.findById(any(Long.class))).thenReturn(Optional.empty());
+
+        ElementoNaoEncontradoException exception = assertThrows(
+                ElementoNaoEncontradoException.class,
+                () -> pacienteService.atualizarPaciente(999L, requestDtoFalsaCorreta, false)
+        );
+
+        assertEquals("Não foi encontrado paciente com o id 999", exception.getMessage());
 
     }
 

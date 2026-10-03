@@ -38,6 +38,25 @@ public class PacienteService {
         return pacienteRepository.findAll().stream().map(this::converterParaResponseDto).toList();
     }
 
+    public void deletarPaciente(Long id) {
+        Paciente paciente = pacienteRepository.findById(id).orElseThrow(
+                () -> new ElementoNaoEncontradoException("Não foi encontrado paciente com o id " + id)
+        );
+
+        // todo: Não pode ser excluído se possuir consultas com statuos "AGENDADA" ou "CONFIRMADA" no sistema.
+
+        pacienteRepository.deleteById(id);
+
+    }
+
+    public PacienteResponseDto atualizarPaciente(Long id, PacienteRequestDto dto, Boolean ativo) {
+        Paciente paciente = pacienteRepository.findById(id).orElseThrow(
+                () -> new ElementoNaoEncontradoException("Não foi encontrado paciente com o id " + id)
+        );
+
+        return converterParaResponseDto(pacienteRepository.save(converterParaModel(id, dto, ativo)));
+    }
+
 
 
     // MÉTODOS DE CONVERSÃO DE ENTIDADES -------------------------------------------------------------------------------
