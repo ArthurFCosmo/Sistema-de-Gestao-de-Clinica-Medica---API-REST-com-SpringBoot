@@ -31,10 +31,5 @@ public record MedicoRequestDto(
         @NotNull(message = "Id da especialidade é obrigatório.")
         Long idEspecialidade
 
-
-
-
-
-
 ) {
 }

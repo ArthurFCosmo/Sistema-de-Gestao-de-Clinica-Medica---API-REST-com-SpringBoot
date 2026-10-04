@@ -21,21 +21,29 @@ public class UtilsSgcmTest {
     }
 
     @Test
-    void deveTratarTelefoneComSucesso() {
-
-        String resultado = UtilsSgcm.tratarTelefone("(00) 12345-1234");
-
-        assertEquals("00123451234", resultado);
-
-    }
-
-    @Test
-    void deveFormatarTelefoneCelularComSuccesso() {
+    void deveRemoverOqueNaoForNumeroComSucesso() {
 
         String resultado = UtilsSgcm.formatarTelefone("00123451234");
 
         assertEquals("(00) 12345-1234", resultado);
 
+    }
+
+    @Test
+    void deveTratarCrm() {
+
+        String resultado = UtilsSgcm.tratarCrm("123456-PE");
+
+        assertEquals("123456PE", resultado);
+
+    }
+
+    @Test
+    void deveFormatarCrm() {
+
+        String resultado = UtilsSgcm.formatarCrm("123456PE");
+
+        assertEquals("123456-PE", resultado);
     }
 
     @Test

@@ -12,8 +12,23 @@ public final class UtilsSgcm {
         return cpf.substring(0, 3) + ".***.***-**";
     }
 
-    public static String tratarTelefone(String telefone) {
-        return telefone.replaceAll("[^0-9]", ""); // remove tudo que não for dígito de 0 a 9
+    public static String tratarDeixandoSoNumeros(String dadosSemTratamento) {
+        return dadosSemTratamento.replaceAll("[^0-9]", ""); // remove tudo que não for dígito de 0 a 9
+    }
+
+    public static String tratarCrm(String crm) {
+        return crm.replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
+    }
+
+    public static String formatarCrm(String crm) {
+
+        String numeros = crm.replaceAll("[^0-9]", "");
+        String letras = crm.replaceAll("[^a-zA-Z]","");
+
+        String crmFormatada = numeros + "-" + letras;
+
+        return crmFormatada.toUpperCase();
+
     }
 
     public static String formatarTelefone(String telefone) {

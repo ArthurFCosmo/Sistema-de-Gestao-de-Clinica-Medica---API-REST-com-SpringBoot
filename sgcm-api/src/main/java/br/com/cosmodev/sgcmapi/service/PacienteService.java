@@ -65,9 +65,9 @@ public class PacienteService {
         return new Paciente(
                 null,
                 dto.nome(),
-                dto.cpf(),
+                tratarDeixandoSoNumeros(dto.cpf()),
                 dto.email(),
-                tratarTelefone(dto.telefone()),
+                tratarDeixandoSoNumeros(dto.telefone()),
                 dto.dataNascimento(),
                 true
         );
@@ -78,9 +78,9 @@ public class PacienteService {
         return new Paciente(
                 id,
                 dto.nome(),
-                dto.cpf(),
+                tratarDeixandoSoNumeros(dto.cpf()),
                 dto.email(),
-                tratarTelefone(dto.telefone()),
+                tratarDeixandoSoNumeros(dto.telefone()),
                 dto.dataNascimento(),
                 ativo
         );
