@@ -46,7 +46,7 @@ public class MedicoService {
                 () -> new ElementoNaoEncontradoException("Não foi encontrado médico com o id " + id)
         );
 
-        // todo: médico não pode ser excluído se tiver consultas vinculadas a ele
+        // todo: Não pode ser excluído se possuir consultas com status "AGENDADA" ou "CONFIRMADA" no sistema.
 
         medicoRepository.deleteById(id);
     }
@@ -97,6 +97,8 @@ public class MedicoService {
                 model.getEspecialidade().getNome()
         );
     }
+
+    // MÉTODOS DE CONSULTA DE OUTRA ENTIDADE ---------------------------------------------------------------------------
 
     private Especialidade buscarEspecialidade(Long id) {
         return especialidadeRepository.findById(id).orElseThrow(

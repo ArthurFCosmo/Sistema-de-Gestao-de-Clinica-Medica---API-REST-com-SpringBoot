@@ -310,6 +310,8 @@ public class MedicoServiceTest {
         verify(medicoRepository, never()).save(any(Medico.class));
     }
 
+    // ENTIDADES PRE MONTADAS PARA ELIMINAR BOILERPLATE ----------------------------------------------------------------
+
     private MedicoRequestDto medicoDto(String nome, String crm, Long idEspecialidade) {
         return new MedicoRequestDto(nome, crm, "arthur@email.com", "(11) 99999-9999", idEspecialidade);
     }

@@ -1,5 +1,6 @@
 package br.com.cosmodev.sgcmapi.dtos;
 
+import br.com.cosmodev.sgcmapi.enums.StatusConsulta;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 
@@ -10,6 +11,8 @@ public record ConsultaRequestDto(
         @NotNull(message = "Data e hora da consulta são obrigatórias.")
         @Future(message = "Consulta deve ser no futuro.")
         LocalDateTime dataHora,
+
+        StatusConsulta status,
 
         String observacoes,
 
