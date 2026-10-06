@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static br.com.cosmodev.sgcmapi.service.UtilsSgcm.formatarCrm;
+
 @Service
 @RequiredArgsConstructor
 public class ConsultaService {
@@ -44,7 +46,7 @@ public class ConsultaService {
     };
 
     public void deletarConsultaPorId(Long id) {
-        Consulta consulta = consultaRepository.findById(id).orElseThrow(
+        consultaRepository.findById(id).orElseThrow(
                 () -> new ElementoNaoEncontradoException("Não foi encontrada consulta com id " + id)
         );
 
@@ -52,7 +54,7 @@ public class ConsultaService {
     }
 
     public ConsultaResponseDto atualizarConsulta(Long id, ConsultaRequestDto dto) {
-        Consulta consulta = consultaRepository.findById(id).orElseThrow(
+        consultaRepository.findById(id).orElseThrow(
                 () -> new ElementoNaoEncontradoException("Não foi encontrada consulta com id " + id)
         );
 
@@ -94,7 +96,7 @@ public class ConsultaService {
                 model.getObservacoes(),
                 model.getMedico().getId(),
                 model.getMedico().getNome(),
-                UtilsSgcm.formatarCrm(model.getMedico().getCrm()),
+                formatarCrm(model.getMedico().getCrm()),
                 model.getPaciente().getId(),
                 model.getPaciente().getNome()
         );
