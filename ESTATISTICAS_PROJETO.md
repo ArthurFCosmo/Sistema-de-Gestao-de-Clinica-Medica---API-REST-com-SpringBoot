@@ -10,7 +10,7 @@
 | 19%                     | [x]       | Camada Repository                              | 8 min   | ter 15/09/2026 07:36 |
 | 25%                     | [x]       | DTO's                                          | 101 min | sex 18/09/2026 21:00 |
 | 37%                     | [x]       | Testes unitários do Service + Métodos do crud  | 586 min | seg 05/10/2026 21:48 |
-| 52%                     | [ ]       | Regras de serviço + Exceções + Testes          |  50 min |                      |
+| 52%                     | [ ]       | Regras de serviço + Exceções + Testes          |  70 min |                      |
 | 60%                     | [ ]       | Camada Controller                              |         |                      |
 | 70%                     | [ ]       | Testes unitários do Controller                 |         |                      |
 | 75%                     | [ ]       | Tratamento de exceções                         |         |                      |

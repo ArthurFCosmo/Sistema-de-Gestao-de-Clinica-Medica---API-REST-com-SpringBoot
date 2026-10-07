@@ -2,9 +2,12 @@ package br.com.cosmodev.sgcmapi.service;
 
 import br.com.cosmodev.sgcmapi.dtos.MedicoRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.MedicoResponseDto;
+import br.com.cosmodev.sgcmapi.enums.StatusConsulta;
 import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
+import br.com.cosmodev.sgcmapi.exceptions.RegraDeNegocioVioladaException;
 import br.com.cosmodev.sgcmapi.model.Especialidade;
 import br.com.cosmodev.sgcmapi.model.Medico;
+import br.com.cosmodev.sgcmapi.repository.ConsultaRepository;
 import br.com.cosmodev.sgcmapi.repository.EspecialidadeRepository;
 import br.com.cosmodev.sgcmapi.repository.MedicoRepository;
 import org.junit.jupiter.api.Test;
@@ -28,6 +31,9 @@ public class MedicoServiceTest {
 
     @Mock
     private EspecialidadeRepository especialidadeRepository;
+
+    @Mock
+    private ConsultaRepository consultaRepository;
 
     @InjectMocks
     private MedicoService medicoService;
@@ -115,7 +121,7 @@ public class MedicoServiceTest {
         assertAll(
                 () -> assertEquals(1L, resultado.id()),
                 () -> assertEquals("Arthur Cosmo", resultado.nome()),
-                () -> assertEquals("123456PE", resultado.crm()),
+                () -> assertEquals("123456-PE", resultado.crm()),
                 () -> assertEquals("arthur@email.com", resultado.email()),
                 () -> assertEquals("(11) 99999-9999", resultado.telefone()),
                 () -> assertTrue(resultado.ativo()),
@@ -241,20 +247,22 @@ public class MedicoServiceTest {
     void deveDeletarMedicoComSucessoQuandoExistir() {
 
         // Preparação
-        when(medicoRepository.findById(1L)).thenReturn(Optional.of(medicoModelo(1L, "Arthur Cosmo", "123456-PE", true)));
+        when(medicoRepository.existsById(1L)).thenReturn(true);
+        when(consultaRepository.existsByMedico_IdAndStatusIn(1L, StatusConsulta.ativos())).thenReturn(false);
 
         // Execução
         medicoService.deletarMedico(1L);
 
         // Confirmação
-        verify(medicoRepository, times(1)).findById(1L);
+        verify(medicoRepository, times(1)).existsById(1L);
+        verify(consultaRepository, times(1)).existsByMedico_IdAndStatusIn(1L, StatusConsulta.ativos());
         verify(medicoRepository, times(1)).deleteById(1L);
     }
 
     @Test
     void deveLancarExceptionCasoNaoEncontreMedicoParaDeletar() {
 
-        when(medicoRepository.findById(999L)).thenReturn(Optional.empty());
+        when(medicoRepository.existsById(999L)).thenReturn(false);
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
@@ -262,7 +270,28 @@ public class MedicoServiceTest {
         );
 
         assertEquals("Não foi encontrado médico com o id 999", exception.getMessage());
-        verify(medicoRepository, never()).deleteById(any());
+        verify(medicoRepository, times(1)).existsById(999L);
+        verify(consultaRepository, never()).existsByMedico_IdAndStatusIn(anyLong(), anyList());
+        verify(medicoRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void deveLancarExceptionAoDeletarMedicoComConsultasAtivas() {
+
+        when(medicoRepository.existsById(1L)).thenReturn(true);
+        when(consultaRepository.existsByMedico_IdAndStatusIn(1L, StatusConsulta.ativos())).thenReturn(true);
+
+        RegraDeNegocioVioladaException exception = assertThrows(
+                RegraDeNegocioVioladaException.class,
+                () -> medicoService.deletarMedico(1L)
+        );
+
+        assertEquals(
+                "O medico com id 1 não pôde ser deletado, pois possui consultas ativas.",
+                exception.getMessage()
+        );
+        verify(consultaRepository, times(1)).existsByMedico_IdAndStatusIn(1L, StatusConsulta.ativos());
+        verify(medicoRepository, never()).deleteById(anyLong());
     }
 
     @Test
@@ -273,7 +302,7 @@ public class MedicoServiceTest {
         Medico medicoAtual = medicoModelo(1L, "Arthur Cosmo", "123456PE", true);
         Medico medicoAtualizado = medicoModelo(1L, "Arthur Silva", "654321SP", false);
 
-        when(medicoRepository.findById(1L)).thenReturn(Optional.of(medicoAtual));
+        when(medicoRepository.existsById(1L)).thenReturn(true);
         when(especialidadeRepository.findById(1L)).thenReturn(Optional.of(medicoAtualizado.getEspecialidade()));
         when(medicoRepository.save(any(Medico.class))).thenReturn(medicoAtualizado);
 
@@ -291,7 +320,7 @@ public class MedicoServiceTest {
                 () -> assertEquals("Cardiologista", resultado.especialidade())
         );
 
-        verify(medicoRepository, times(1)).findById(1L);
+        verify(medicoRepository, times(1)).existsById(1L);
         verify(medicoRepository, times(1)).save(medicoAtualizado);
     }
 
@@ -299,7 +328,7 @@ public class MedicoServiceTest {
     void deveLancarExceptionCasoNaoEncontreMedicoParaAtualizar() {
 
         MedicoRequestDto dto = medicoDto("Arthur Silva", "654321-SP", 1L);
-        when(medicoRepository.findById(999L)).thenReturn(Optional.empty());
+        when(medicoRepository.existsById(999L)).thenReturn(false);
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
@@ -307,6 +336,7 @@ public class MedicoServiceTest {
         );
 
         assertEquals("Não foi encontrado médico com o id 999", exception.getMessage());
+        verify(medicoRepository, times(1)).existsById(999L);
         verify(medicoRepository, never()).save(any(Medico.class));
     }
 

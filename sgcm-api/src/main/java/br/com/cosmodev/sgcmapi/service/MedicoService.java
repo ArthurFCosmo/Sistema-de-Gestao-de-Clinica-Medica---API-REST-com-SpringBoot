@@ -2,9 +2,12 @@ package br.com.cosmodev.sgcmapi.service;
 
 import br.com.cosmodev.sgcmapi.dtos.MedicoRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.MedicoResponseDto;
+import br.com.cosmodev.sgcmapi.enums.StatusConsulta;
 import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
+import br.com.cosmodev.sgcmapi.exceptions.RegraDeNegocioVioladaException;
 import br.com.cosmodev.sgcmapi.model.Especialidade;
 import br.com.cosmodev.sgcmapi.model.Medico;
+import br.com.cosmodev.sgcmapi.repository.ConsultaRepository;
 import br.com.cosmodev.sgcmapi.repository.EspecialidadeRepository;
 import br.com.cosmodev.sgcmapi.repository.MedicoRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ public class MedicoService {
 
     private final MedicoRepository medicoRepository;
     private final EspecialidadeRepository especialidadeRepository;
+    private final ConsultaRepository consultaRepository;
 
     // MÉTODOS PADRÃO DO CRUD ------------------------------------------------------------------------------------------
 
@@ -42,19 +46,23 @@ public class MedicoService {
     }
 
     public void deletarMedico(Long id) {
-        medicoRepository.findById(id).orElseThrow(
-                () -> new ElementoNaoEncontradoException("Não foi encontrado médico com o id " + id)
-        );
 
-        // todo: Não pode ser excluído se possuir consultas com status "AGENDADA" ou "CONFIRMADA" no sistema.
+        if (!medicoRepository.existsById(id)) {
+            throw new ElementoNaoEncontradoException("Não foi encontrado médico com o id " + id);
+        }
+
+        // Impede de deletar um médico com consultas ativas
+        if (consultaRepository.existsByMedico_IdAndStatusIn(id, StatusConsulta.ativos())) {
+            throw new RegraDeNegocioVioladaException("O medico com id " + id + " não pôde ser deletado, pois possui consultas ativas.");
+        }
 
         medicoRepository.deleteById(id);
     }
 
     public MedicoResponseDto atualizarMedico(Long id, MedicoRequestDto dto, Boolean ativo) {
-        medicoRepository.findById(id).orElseThrow(
-                () -> new ElementoNaoEncontradoException("Não foi encontrado médico com o id " + id)
-        );
+        if (!medicoRepository.existsById(id)) {
+            throw new ElementoNaoEncontradoException("Não foi encontrado médico com o id " + id);
+        }
 
         return converterParaResponseDto(medicoRepository.save(converterParaModel(id, dto, ativo)));
     }
