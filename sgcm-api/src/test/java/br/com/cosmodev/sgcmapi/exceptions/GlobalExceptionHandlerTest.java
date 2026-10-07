@@ -46,4 +46,29 @@ public class GlobalExceptionHandlerTest {
 
     }
 
+    @Test
+    void deveMontarDtoCorretamenteParaRegraDeNegocioVioladaException () {
+
+        // Preparação: Mockando a URL da requisição
+        when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:8080/especialidades/1"));
+
+        // Preparação: Mockando a exception levando em conta que deu tudo certo na parte do service ao montá-la
+        RegraDeNegocioVioladaException exception = new RegraDeNegocioVioladaException("Especialidade com id 1 não pôde ser deletada pois existem médicos vinculados a ela.");
+
+        // Execução
+        ResponseEntity<ExceptionTratadaResponseDto> resultado = globalExceptionHandler.tratarRegraDeNegocioVioladaException(request, exception);
+
+        // Confirmação
+        assertAll(
+                () -> assertEquals(HttpStatus.CONFLICT, resultado.getStatusCode()), // Confirma se o status passado foi no cabeçalho da requisição
+                () -> assertNotNull(resultado.getBody()), // Confirma que o body foi anexado na response
+                () -> assertNotNull(resultado.getBody().timestamp()), // Confirma que o timestamp foi anexado ao body da response
+                () -> assertEquals(409, resultado.getBody().status()), // Confirma que o status foi passado corretamente no body da response
+                () -> assertEquals("Conflict", resultado.getBody().error()), // Confirma o nome do erro no body da response
+                () -> assertEquals("Especialidade com id 1 não pôde ser deletada pois existem médicos vinculados a ela.", resultado.getBody().message()), // Confirma a mensagem
+                () -> assertEquals("http://localhost:8080/especialidades/1", resultado.getBody().path()) // Confirma o endereço endpoint
+        );
+
+    }
+
 }

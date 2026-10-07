@@ -3,8 +3,10 @@ package br.com.cosmodev.sgcmapi.service;
 import br.com.cosmodev.sgcmapi.dtos.EspecialidadeRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.EspecialidadeResponseDto;
 import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
+import br.com.cosmodev.sgcmapi.exceptions.RegraDeNegocioVioladaException;
 import br.com.cosmodev.sgcmapi.model.Especialidade;
 import br.com.cosmodev.sgcmapi.repository.EspecialidadeRepository;
+import br.com.cosmodev.sgcmapi.repository.MedicoRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,6 +24,9 @@ public class EspecialidadeServiceTest {
 
     @Mock
     private EspecialidadeRepository especialidadeRepository;
+
+    @Mock
+    private MedicoRepository medicoRepository;
 
     @InjectMocks
     private EspecialidadeService especialidadeService;
@@ -209,17 +214,15 @@ public class EspecialidadeServiceTest {
 
         // Preparação
         Long id = 1L;
-        Especialidade especialidade = new Especialidade();
 
-
-        when(especialidadeRepository.findById(id))
-                .thenReturn(Optional.of(especialidade));
+        when(especialidadeRepository.existsById(id)).thenReturn(true);
+        when(medicoRepository.existsByEspecialidade_Id(id)).thenReturn(false);
 
         // Execução
         especialidadeService.deletarEspecialidade(id);
 
         // Confirmação: Se o métodó do repository foi chamado
-        verify(especialidadeRepository, times(1)).findById(id);
+        verify(especialidadeRepository, times(1)).existsById(id);
         verify(especialidadeRepository, times(1)).deleteById(id);
 
     }
@@ -228,10 +231,10 @@ public class EspecialidadeServiceTest {
     @Test
     void deveLancarExceptionCasoNaoEncontreEspecialidadeParaDeletar () {
 
-        // Preparação: Retornando valor vazio para busca no BD usando a classe Optional padrão do repository
-        when(especialidadeRepository.findById(999L)).thenReturn(Optional.empty());
+        // Preparação: Informando que a especialidade não existe no banco
+        when(especialidadeRepository.existsById(999L)).thenReturn(false);
 
-        // Confirmação: Validando se o métodó lança a exception
+        // Execução: Criando a exception
         ElementoNaoEncontradoException excecao = assertThrows(
                 ElementoNaoEncontradoException.class,
                 () -> especialidadeService.deletarEspecialidade(999L)
@@ -240,6 +243,32 @@ public class EspecialidadeServiceTest {
         // Confirmação: Validando se a exception foi montada com a mensagem correta (Que é o único parâmetro legível antes do tratamento)
 
         assertEquals("Não foi encontrada especialidade com o id 999", excecao.getMessage());
+        verify(especialidadeRepository, times(1)).existsById(999L);
+        verify(especialidadeRepository, never()).deleteById(anyLong());
+
+    }
+
+    @Test
+    void deveLancarExceptionCasoTenteDeletarEspecialidadeComMedicosVinculados() {
+
+        // Preparação
+        when(especialidadeRepository.existsById(1L)).thenReturn(true);
+
+        when(medicoRepository.existsByEspecialidade_Id(1L)).thenReturn(true);
+
+        // Execução: Criando a exception
+        RegraDeNegocioVioladaException excecao = assertThrows(
+                RegraDeNegocioVioladaException.class,
+                () -> especialidadeService.deletarEspecialidade(1L)
+        );
+
+        // Confirmação: Validando se a exception foi montada com a mensagem correta (Que é o único parâmetro legível antes do tratamento)
+
+        assertEquals("Especialidade com id 1 não pôde ser deletada pois existem médicos vinculados a ela.", excecao.getMessage());
+
+        verify(especialidadeRepository, times(1)).existsById(1L);
+        verify(medicoRepository, times(1)).existsByEspecialidade_Id(1L);
+        verify(especialidadeRepository, never()).deleteById(anyLong());
 
     }
 
@@ -252,13 +281,6 @@ public class EspecialidadeServiceTest {
                 "Especialista na saúde do coração e do sistema circulatório."
         );
 
-        // Preparação: Mock da especialidade salva no banco
-        Especialidade especialidadeSalvaMock = new Especialidade(
-                2L,
-                "Oncologista",
-                "Especialista em diagnóstico e tratamentos de câncer."
-        );
-
         // Preparação: Mock da especialidade que será salva no banco após o métodó ser executado
         Especialidade especialidadeSalvaMockNova = new Especialidade(
                 2L,
@@ -269,8 +291,8 @@ public class EspecialidadeServiceTest {
         Long id = 2L;
 
 
-        // Preparação: Mock do métodó de buscar no BD retorando notnull
-        when(especialidadeRepository.findById(2L)).thenReturn(Optional.of(especialidadeSalvaMock));
+        // Preparação: Informando que a especialidade existe no banco
+        when(especialidadeRepository.existsById(2L)).thenReturn(true);
 
         // Preparação: Mock da especialidade sendo salva depois de ser convertida de dto para model
         when(especialidadeRepository.save(any(Especialidade.class))).thenReturn(especialidadeSalvaMockNova);
@@ -285,7 +307,7 @@ public class EspecialidadeServiceTest {
                 () -> assertEquals("Especialista na saúde do coração e do sistema circulatório.", resultado.descricao())
         );
 
-        verify(especialidadeRepository, times(1)).findById(id);
+        verify(especialidadeRepository, times(1)).existsById(id);
         verify(especialidadeRepository, times(1)).save(especialidadeSalvaMockNova);
 
     }
@@ -299,8 +321,8 @@ public class EspecialidadeServiceTest {
                 "Especialista na saúde do coração e do sistema circulatório."
         );
 
-        // Preparação: Retornando valor vazio para busca no BD usando a classe Optional padrão do repository
-        when(especialidadeRepository.findById(999L)).thenReturn(Optional.empty());
+        // Preparação: Informando que a especialidade não existe no banco
+        when(especialidadeRepository.existsById(999L)).thenReturn(false);
 
         // Confirmação: Validando se o métodó lança a exception
         ElementoNaoEncontradoException excecao = assertThrows(
@@ -311,6 +333,8 @@ public class EspecialidadeServiceTest {
         // Confirmação: Validando se a exception foi montada com a mensagem correta (Que é o único parâmetro legível antes do tratamento)
 
         assertEquals("Não foi encontrada especialidade com o id 999", excecao.getMessage());
+        verify(especialidadeRepository, times(1)).existsById(999L);
+        verify(especialidadeRepository, never()).save(any(Especialidade.class));
 
     }
 

@@ -17,6 +17,11 @@ public class GlobalExceptionHandler {
         return montarExceptionTratadaResponseDto(request, HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
+    @ExceptionHandler(RegraDeNegocioVioladaException.class)
+    public ResponseEntity<ExceptionTratadaResponseDto> tratarRegraDeNegocioVioladaException (HttpServletRequest request, RegraDeNegocioVioladaException exception) {
+        return montarExceptionTratadaResponseDto(request, HttpStatus.CONFLICT, exception.getMessage());
+    }
+
     // Métodó para criar o DTO response e evitar boilerplate
     private ResponseEntity<ExceptionTratadaResponseDto> montarExceptionTratadaResponseDto(HttpServletRequest request, HttpStatus status, String mensagem) {
         ExceptionTratadaResponseDto dtoException = new ExceptionTratadaResponseDto(
