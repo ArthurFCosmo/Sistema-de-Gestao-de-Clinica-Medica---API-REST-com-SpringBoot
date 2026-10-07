@@ -2,8 +2,11 @@ package br.com.cosmodev.sgcmapi.service;
 
 import br.com.cosmodev.sgcmapi.dtos.PacienteRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.PacienteResponseDto;
+import br.com.cosmodev.sgcmapi.enums.StatusConsulta;
 import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
+import br.com.cosmodev.sgcmapi.exceptions.RegraDeNegocioVioladaException;
 import br.com.cosmodev.sgcmapi.model.Paciente;
+import br.com.cosmodev.sgcmapi.repository.ConsultaRepository;
 import br.com.cosmodev.sgcmapi.repository.PacienteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,7 @@ public class PacienteService {
 
     // INJEÇÃO DE DEPENDÊNCIAS -----------------------------------------------------------------------------------------
     private final PacienteRepository pacienteRepository;
+    private final ConsultaRepository consultaRepository;
 
     // MÉTODOS PADRÃO DO CRUD ------------------------------------------------------------------------------------------
 
@@ -39,20 +43,24 @@ public class PacienteService {
     }
 
     public void deletarPaciente(Long id) {
-        Paciente paciente = pacienteRepository.findById(id).orElseThrow(
-                () -> new ElementoNaoEncontradoException("Não foi encontrado paciente com o id " + id)
-        );
 
-        // todo: Não pode ser excluído se possuir consultas com statuos "AGENDADA" ou "CONFIRMADA" no sistema.
+        if (!pacienteRepository.existsById(id)) {
+            throw new ElementoNaoEncontradoException("Não foi encontrado paciente com o id " + id);
+        }
+
+        // Impede de deletar paciente com consultas ativas
+        if (consultaRepository.existsByPaciente_IdAndStatusIn(id, StatusConsulta.ativos())) {
+            throw new RegraDeNegocioVioladaException("O paciente com id " + id + " não pôde ser deletado, pois possui consultas ativas.");
+        }
 
         pacienteRepository.deleteById(id);
 
     }
 
     public PacienteResponseDto atualizarPaciente(Long id, PacienteRequestDto dto, Boolean ativo) {
-        Paciente paciente = pacienteRepository.findById(id).orElseThrow(
-                () -> new ElementoNaoEncontradoException("Não foi encontrado paciente com o id " + id)
-        );
+        if (!pacienteRepository.existsById(id)) {
+            throw new ElementoNaoEncontradoException("Não foi encontrado paciente com o id " + id);
+        }
 
         return converterParaResponseDto(pacienteRepository.save(converterParaModel(id, dto, ativo)));
     }

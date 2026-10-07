@@ -1,11 +1,12 @@
 package br.com.cosmodev.sgcmapi.service;
 
-import br.com.cosmodev.sgcmapi.dtos.EspecialidadeRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.PacienteRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.PacienteResponseDto;
+import br.com.cosmodev.sgcmapi.enums.StatusConsulta;
 import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
-import br.com.cosmodev.sgcmapi.model.Especialidade;
+import br.com.cosmodev.sgcmapi.exceptions.RegraDeNegocioVioladaException;
 import br.com.cosmodev.sgcmapi.model.Paciente;
+import br.com.cosmodev.sgcmapi.repository.ConsultaRepository;
 import br.com.cosmodev.sgcmapi.repository.PacienteRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +28,9 @@ public class PacienteServiceTest {
 
     @Mock
     private PacienteRepository pacienteRepository;
+
+    @Mock
+    private ConsultaRepository consultaRepository;
 
     @InjectMocks
     private PacienteService pacienteService;
@@ -295,25 +299,15 @@ public class PacienteServiceTest {
     @Test
     void deveDeletarPacienteComSucessoQuandoExistir() {
 
-        // Preparação
-        LocalDate dataNascimento = LocalDate.of(1990, 5, 20);
-        Paciente pacienteModelFalsoCorreto = new Paciente(
-                1L,
-                "Arthur Cosmo",
-                "12345678909",
-                "arthur@email.com",
-                "11999999999",
-                dataNascimento,
-                true
-        );
-
-        when(pacienteRepository.findById(any(Long.class))).thenReturn(Optional.of(pacienteModelFalsoCorreto));
+        when(pacienteRepository.existsById(1L)).thenReturn(true);
+        when(consultaRepository.existsByPaciente_IdAndStatusIn(1L, StatusConsulta.ativos())).thenReturn(false);
 
         // Execução
         pacienteService.deletarPaciente(1L);
 
         // Confirmação
-        verify(pacienteRepository, times(1)).findById(1L);
+        verify(pacienteRepository, times(1)).existsById(1L);
+        verify(consultaRepository, times(1)).existsByPaciente_IdAndStatusIn(1L, StatusConsulta.ativos());
         verify(pacienteRepository, times(1)).deleteById(1L);
 
     }
@@ -321,7 +315,7 @@ public class PacienteServiceTest {
     @Test
     void deveLancarExceptionCasoNaoEncontrePacienteParaDeletar() {
 
-        when(pacienteRepository.findById(any(Long.class))).thenReturn(Optional.empty());
+        when(pacienteRepository.existsById(999L)).thenReturn(false);
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
@@ -329,7 +323,28 @@ public class PacienteServiceTest {
         );
 
         assertEquals("Não foi encontrado paciente com o id 999", exception.getMessage());
+        assertEquals("Não foi encontrado paciente com o id 999", exception.getMessage());
+        verify(consultaRepository, never()).existsByPaciente_IdAndStatusIn(anyLong(), anyList());
+        verify(pacienteRepository, never()).deleteById(anyLong());
+    }
 
+    @Test
+    void deveLancarExceptionAoDeletarPacienteComConsultasAtivas() {
+
+        when(pacienteRepository.existsById(1L)).thenReturn(true);
+        when(consultaRepository.existsByPaciente_IdAndStatusIn(1L, StatusConsulta.ativos())).thenReturn(true);
+
+        RegraDeNegocioVioladaException exception = assertThrows(
+                RegraDeNegocioVioladaException.class,
+                () -> pacienteService.deletarPaciente(1L)
+        );
+
+        assertEquals(
+                "O paciente com id 1 não pôde ser deletado, pois possui consultas ativas.",
+                exception.getMessage()
+        );
+        verify(consultaRepository, times(1)).existsByPaciente_IdAndStatusIn(1L, StatusConsulta.ativos());
+        verify(pacienteRepository, never()).deleteById(anyLong());
     }
 
     @Test
@@ -371,7 +386,7 @@ public class PacienteServiceTest {
         Long id = 1L;
         Boolean ativo = false;
 
-        when(pacienteRepository.findById(any(Long.class))).thenReturn(Optional.of(pacienteModelFalsoCorreto));
+        when(pacienteRepository.existsById(id)).thenReturn(true);
 
         when(pacienteRepository.save(any(Paciente.class))).thenReturn(pacienteModelFalsoCorretoNovo);
 
@@ -389,7 +404,7 @@ public class PacienteServiceTest {
                 () -> assertEquals(false, resultado.ativo())
         );
 
-        verify(pacienteRepository, times(1)).findById(id);
+        verify(pacienteRepository, times(1)).existsById(id);
         verify(pacienteRepository, times(1)).save(pacienteModelFalsoCorretoNovo);
 
     }
@@ -407,7 +422,7 @@ public class PacienteServiceTest {
                 dataNascimento
         );
 
-        when(pacienteRepository.findById(any(Long.class))).thenReturn(Optional.empty());
+        when(pacienteRepository.existsById(999L)).thenReturn(false);
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
@@ -415,6 +430,8 @@ public class PacienteServiceTest {
         );
 
         assertEquals("Não foi encontrado paciente com o id 999", exception.getMessage());
+        verify(pacienteRepository, times(1)).existsById(999L);
+        verify(pacienteRepository, never()).save(any(Paciente.class));
 
     }
 

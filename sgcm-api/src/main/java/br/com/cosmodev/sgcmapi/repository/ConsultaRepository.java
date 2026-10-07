@@ -12,4 +12,6 @@ public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
 
      boolean existsByMedico_IdAndStatusIn(Long idMedico, Collection<StatusConsulta> status);
 
+     boolean existsByPaciente_IdAndStatusIn(Long idPaciente, Collection<StatusConsulta> status);
+
 }
