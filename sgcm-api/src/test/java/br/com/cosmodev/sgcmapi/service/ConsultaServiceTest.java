@@ -29,8 +29,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-// todo: Ler e checar os testes
-
 @ExtendWith(MockitoExtension.class)
 public class ConsultaServiceTest {
 

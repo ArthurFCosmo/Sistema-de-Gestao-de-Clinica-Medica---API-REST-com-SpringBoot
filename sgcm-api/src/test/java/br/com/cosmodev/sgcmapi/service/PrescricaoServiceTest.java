@@ -4,6 +4,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import br.com.cosmodev.sgcmapi.dtos.PrescricaoRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.PrescricaoResponseDto;
 import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
+import br.com.cosmodev.sgcmapi.exceptions.RegraDeNegocioVioladaException;
+import br.com.cosmodev.sgcmapi.enums.StatusConsulta;
 import br.com.cosmodev.sgcmapi.model.Consulta;
 import br.com.cosmodev.sgcmapi.model.Medico;
 import br.com.cosmodev.sgcmapi.model.Paciente;
@@ -149,8 +151,37 @@ public class PrescricaoServiceTest {
                 () -> assertEquals(dto.medicamentos(), resultado.medicamentos()),
                 () -> assertEquals(LocalDate.now(), resultado.dataEmissao())
         );
-        verify(consultaRepository).findById(1L);
+        verify(consultaRepository, times(2)).findById(1L);
         verify(prescricaoRepository).save(any(Prescricao.class));
+    }
+
+    @Test
+    void deveLancarExceptionCasoConsultaNaoExistaAoSalvarPrescricao() {
+        when(consultaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ElementoNaoEncontradoException exception = assertThrows(
+                ElementoNaoEncontradoException.class,
+                () -> prescricaoService.salvarPrescricao(prescricaoDto())
+        );
+
+        assertEquals("Não foi encontrada consulta com id 1", exception.getMessage());
+        verify(prescricaoRepository, never()).save(any(Prescricao.class));
+    }
+
+    @Test
+    void deveLancarExceptionCasoConsultaNaoEstejaRealizadaAoSalvarPrescricao() {
+        when(consultaRepository.findById(1L)).thenReturn(Optional.of(consultaModelo(StatusConsulta.AGENDADA)));
+
+        RegraDeNegocioVioladaException exception = assertThrows(
+                RegraDeNegocioVioladaException.class,
+                () -> prescricaoService.salvarPrescricao(prescricaoDto())
+        );
+
+        assertEquals(
+                "A prescrição não pôde ser salva pois a consulta com id 1 não está descrita como realizada.",
+                exception.getMessage()
+        );
+        verify(prescricaoRepository, never()).save(any(Prescricao.class));
     }
 
     @Test
@@ -221,18 +252,17 @@ public class PrescricaoServiceTest {
 
     @Test
     void deveDeletarPrescricaoComSucessoQuandoExistir() {
-        when(prescricaoRepository.findById(7L))
-                .thenReturn(Optional.of(prescricaoModelo(7L, prescricaoDto(), LocalDate.of(2030, 5, 10))));
+        when(prescricaoRepository.existsById(7L)).thenReturn(true);
 
         prescricaoService.deletarPrescricaoPeloId(7L);
 
-        verify(prescricaoRepository).findById(7L);
+        verify(prescricaoRepository).existsById(7L);
         verify(prescricaoRepository).deleteById(7L);
     }
 
     @Test
     void deveLancarExceptionCasoNaoEncontrePrescricaoParaDeletar() {
-        when(prescricaoRepository.findById(999L)).thenReturn(Optional.empty());
+        when(prescricaoRepository.existsById(999L)).thenReturn(false);
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
@@ -240,6 +270,7 @@ public class PrescricaoServiceTest {
         );
 
         assertEquals("Não foi encontrada prescrição com id 999", exception.getMessage());
+        verify(prescricaoRepository).existsById(999L);
         verify(prescricaoRepository, never()).deleteById(any());
     }
 
@@ -251,8 +282,7 @@ public class PrescricaoServiceTest {
                 1L
         );
         LocalDate dataEmissao = LocalDate.of(2030, 5, 12);
-        when(prescricaoRepository.findById(7L))
-                .thenReturn(Optional.of(prescricaoModelo(7L, prescricaoDto(), LocalDate.of(2030, 5, 10))));
+        when(prescricaoRepository.existsById(7L)).thenReturn(true);
         when(consultaRepository.findById(1L)).thenReturn(Optional.of(consultaModelo()));
         when(prescricaoRepository.save(any(Prescricao.class)))
                 .thenReturn(prescricaoModelo(7L, dtoAtualizado, dataEmissao));
@@ -266,14 +296,14 @@ public class PrescricaoServiceTest {
                 () -> assertEquals("Ibuprofeno 400mg", resultado.medicamentos()),
                 () -> assertEquals(dataEmissao, resultado.dataEmissao())
         );
-        verify(prescricaoRepository).findById(7L);
-        verify(consultaRepository).findById(1L);
+        verify(prescricaoRepository).existsById(7L);
+        verify(consultaRepository, times(2)).findById(1L);
         verify(prescricaoRepository).save(any(Prescricao.class));
     }
 
     @Test
     void deveLancarExceptionCasoNaoEncontrePrescricaoParaAtualizar() {
-        when(prescricaoRepository.findById(999L)).thenReturn(Optional.empty());
+        when(prescricaoRepository.existsById(999L)).thenReturn(false);
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
@@ -281,8 +311,40 @@ public class PrescricaoServiceTest {
         );
 
         assertEquals("Não foi encontrada prescrição com id 999", exception.getMessage());
+        verify(prescricaoRepository).existsById(999L);
         verify(prescricaoRepository, never()).save(any(Prescricao.class));
         verify(consultaRepository, never()).findById(any());
+    }
+
+    @Test
+    void deveLancarExceptionCasoConsultaNaoExistaAoAtualizarPrescricao() {
+        when(prescricaoRepository.existsById(7L)).thenReturn(true);
+        when(consultaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ElementoNaoEncontradoException exception = assertThrows(
+                ElementoNaoEncontradoException.class,
+                () -> prescricaoService.atualizarPrescricao(7L, prescricaoDto(), LocalDate.of(2030, 5, 10))
+        );
+
+        assertEquals("Não foi encontrada consulta com id 1", exception.getMessage());
+        verify(prescricaoRepository, never()).save(any(Prescricao.class));
+    }
+
+    @Test
+    void deveLancarExceptionCasoConsultaNaoEstejaRealizadaAoAtualizarPrescricao() {
+        when(prescricaoRepository.existsById(7L)).thenReturn(true);
+        when(consultaRepository.findById(1L)).thenReturn(Optional.of(consultaModelo(StatusConsulta.AGENDADA)));
+
+        RegraDeNegocioVioladaException exception = assertThrows(
+                RegraDeNegocioVioladaException.class,
+                () -> prescricaoService.atualizarPrescricao(7L, prescricaoDto(), LocalDate.of(2030, 5, 10))
+        );
+
+        assertEquals(
+                "A prescrição não pôde ser salva pois a consulta com id 1 não está descrita como realizada.",
+                exception.getMessage()
+        );
+        verify(prescricaoRepository, never()).save(any(Prescricao.class));
     }
 
     // ENTIDADES PRE MONTADAS PARA ELIMINAR BOILERPLATE ----------------------------------------------------------------
@@ -300,6 +362,10 @@ public class PrescricaoServiceTest {
     }
 
     private Consulta consultaModelo() {
+        return consultaModelo(StatusConsulta.REALIZADA);
+    }
+
+    private Consulta consultaModelo(StatusConsulta status) {
         Medico medico = new Medico(2L, "Arthur Cosmo", "123456PE", "arthur@email.com",
                 "11999999999", true, null);
         Paciente paciente = new Paciente(3L, "Ana Silva", "12345678901", "ana@email.com",
@@ -307,7 +373,7 @@ public class PrescricaoServiceTest {
         return new Consulta(
                 1L,
                 LocalDateTime.of(2030, 5, 10, 14, 30),
-                br.com.cosmodev.sgcmapi.enums.StatusConsulta.AGENDADA,
+                status,
                 "Consulta de rotina",
                 medico,
                 paciente

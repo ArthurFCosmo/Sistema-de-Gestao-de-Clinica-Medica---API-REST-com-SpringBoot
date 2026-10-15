@@ -2,7 +2,9 @@ package br.com.cosmodev.sgcmapi.service;
 
 import br.com.cosmodev.sgcmapi.dtos.PrescricaoRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.PrescricaoResponseDto;
+import br.com.cosmodev.sgcmapi.enums.StatusConsulta;
 import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
+import br.com.cosmodev.sgcmapi.exceptions.RegraDeNegocioVioladaException;
 import br.com.cosmodev.sgcmapi.model.Consulta;
 import br.com.cosmodev.sgcmapi.model.Prescricao;
 import br.com.cosmodev.sgcmapi.repository.ConsultaRepository;
@@ -27,9 +29,18 @@ public class PrescricaoService {
     // MÉTODOS PADRÃO DO CRUD ------------------------------------------------------------------------------------------
 
     public PrescricaoResponseDto salvarPrescricao(PrescricaoRequestDto dto) {
+
+        // Não pode ser criada ou atualizada se a consulta vinculada não tiver marcada como REALIZADA
+        Consulta consulta = consultaRepository.findById(dto.idConsulta()).orElseThrow(
+                () -> new ElementoNaoEncontradoException("Não foi encontrada consulta com id " + dto.idConsulta())
+        );
+
+        if (!consulta.getStatus().equals(StatusConsulta.REALIZADA)) {
+            throw new RegraDeNegocioVioladaException("A prescrição não pôde ser salva pois a consulta com id " + dto.idConsulta() + " não está descrita como realizada.");
+        }
+
         return converterParaResponseDto(prescricaoRepository.save(converterParaModel(dto)));
 
-        // todo: Não pode ser criada ou atualizada se a consulta vinculada não tiver marcada como REALIZADA
     }
 
     public PrescricaoResponseDto buscarPrescricaoPeloId(Long id) {
@@ -43,19 +54,28 @@ public class PrescricaoService {
     }
 
     public void deletarPrescricaoPeloId(Long id) {
-        prescricaoRepository.findById(id).orElseThrow(
-                () -> new ElementoNaoEncontradoException("Não foi encontrada prescrição com id " + id)
-        );
+
+        if (!prescricaoRepository.existsById(id)) {
+            throw new ElementoNaoEncontradoException("Não foi encontrada prescrição com id " + id);
+        }
 
         prescricaoRepository.deleteById(id);
     }
 
     public PrescricaoResponseDto atualizarPrescricao(Long id, PrescricaoRequestDto dto, LocalDate dataEmissao) {
-        prescricaoRepository.findById(id).orElseThrow(
-                () -> new ElementoNaoEncontradoException("Não foi encontrada prescrição com id " + id)
+
+        if (!prescricaoRepository.existsById(id)) {
+            throw new ElementoNaoEncontradoException("Não foi encontrada prescrição com id " + id);
+        }
+
+        // Não pode ser criada ou atualizada se a consulta vinculada não tiver marcada como REALIZADA
+        Consulta consulta = consultaRepository.findById(dto.idConsulta()).orElseThrow(
+                () -> new ElementoNaoEncontradoException("Não foi encontrada consulta com id " + dto.idConsulta())
         );
 
-        // todo: Não pode ser criada ou atualizada se a consulta vinculada não tiver marcada como REALIZADA
+        if (!consulta.getStatus().equals(StatusConsulta.REALIZADA)) {
+            throw new RegraDeNegocioVioladaException("A prescrição não pôde ser salva pois a consulta com id " + dto.idConsulta() + " não está descrita como realizada.");
+        }
 
         return converterParaResponseDto(prescricaoRepository.save(converterParaModel(id, dto, dataEmissao)));
     }
