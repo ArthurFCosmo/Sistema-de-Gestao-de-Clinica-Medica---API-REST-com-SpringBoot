@@ -2,11 +2,14 @@ package br.com.cosmodev.sgcmapi.service;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.format.DateTimeFormatter;
 
 public final class UtilsSgcm {
 
     // Construtor privado para que a classe não seja instanciada
     private UtilsSgcm() {}
+
+    public static DateTimeFormatter FORMATO_DATA_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     public static String mascararCpf(String cpf) {
         return cpf.substring(0, 3) + ".***.***-**";

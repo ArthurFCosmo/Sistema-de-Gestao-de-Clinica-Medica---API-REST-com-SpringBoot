@@ -21,9 +21,9 @@ public class Consulta {
     private Long id;
 
     @Column(nullable = false)
-    private LocalDateTime data_hora;
+    private LocalDateTime dataHora;
 
-    @Column(nullable = false, length = 20)
+    @Column(name = "data_hora", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private StatusConsulta status;
 

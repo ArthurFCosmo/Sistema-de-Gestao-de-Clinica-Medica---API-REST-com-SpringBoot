@@ -89,7 +89,7 @@ public class PrescricaoService {
                 model.getConsulta().getMedico().getNome(),
                 formatarCrm(model.getConsulta().getMedico().getCrm()),
                 model.getConsulta().getPaciente().getNome(),
-                model.getConsulta().getData_hora(),
+                model.getConsulta().getDataHora(),
                 model.getDescricao(),
                 model.getMedicamentos(),
                 model.getData_emissao()

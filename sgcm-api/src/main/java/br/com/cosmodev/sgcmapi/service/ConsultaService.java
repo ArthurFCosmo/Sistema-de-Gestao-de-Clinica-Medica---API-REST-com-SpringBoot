@@ -2,8 +2,9 @@ package br.com.cosmodev.sgcmapi.service;
 
 import br.com.cosmodev.sgcmapi.dtos.ConsultaRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.ConsultaResponseDto;
-import br.com.cosmodev.sgcmapi.dtos.MedicoResponseDto;
+import br.com.cosmodev.sgcmapi.enums.StatusConsulta;
 import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
+import br.com.cosmodev.sgcmapi.exceptions.RegraDeNegocioVioladaException;
 import br.com.cosmodev.sgcmapi.model.Consulta;
 import br.com.cosmodev.sgcmapi.model.Medico;
 import br.com.cosmodev.sgcmapi.model.Paciente;
@@ -13,8 +14,10 @@ import br.com.cosmodev.sgcmapi.repository.PacienteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+import static br.com.cosmodev.sgcmapi.service.UtilsSgcm.FORMATO_DATA_HORA;
 import static br.com.cosmodev.sgcmapi.service.UtilsSgcm.formatarCrm;
 
 @Service
@@ -30,7 +33,13 @@ public class ConsultaService {
 
     public ConsultaResponseDto salvarConsulta(ConsultaRequestDto dto) {
 
-        // todo: Não podem criar (marcar) consultas num intervalo sobrebosto de 20 minutos entre elas
+        // Permitindo que consultas inativas ignorem o filtro de conflito de horario
+        if (StatusConsulta.ativos().contains(dto.status())) {
+
+            //Não podem criar (marcar) consultas num intervalo sobrebosto de 20 minutos entre elas
+            verificarDisponibilidadeDeHorarioDoMedico(null, dto.idMedico(), dto.dataHora());
+
+        }
 
         return converterParaResponseDto(consultaRepository.save(converterParaModel(dto)));
     }
@@ -46,19 +55,25 @@ public class ConsultaService {
     };
 
     public void deletarConsultaPorId(Long id) {
-        consultaRepository.findById(id).orElseThrow(
-                () -> new ElementoNaoEncontradoException("Não foi encontrada consulta com id " + id)
-        );
+        if (!consultaRepository.existsById(id)) {
+            throw new ElementoNaoEncontradoException("Não foi encontrada consulta com id " + id);
+        }
 
         consultaRepository.deleteById(id);
     }
 
     public ConsultaResponseDto atualizarConsulta(Long id, ConsultaRequestDto dto) {
-        consultaRepository.findById(id).orElseThrow(
-                () -> new ElementoNaoEncontradoException("Não foi encontrada consulta com id " + id)
-        );
+        if (!consultaRepository.existsById(id)) {
+            throw new ElementoNaoEncontradoException("Não foi encontrada consulta com id " + id);
+        }
 
-        // todo: Não podem criar (marcar) consultas num intervalo sobrebosto de 20 minutos entre elas
+        // Permitindo que consultas inativas ignorem o filtro de conflito de horario
+        if (StatusConsulta.ativos().contains(dto.status())) {
+
+            //Não podem criar (marcar) consultas num intervalo sobrebosto de 20 minutos entre elas
+            verificarDisponibilidadeDeHorarioDoMedico(id, dto.idMedico(), dto.dataHora());
+
+        }
 
         return converterParaResponseDto(consultaRepository.save(converterParaModel(id, dto)));
     }
@@ -91,7 +106,7 @@ public class ConsultaService {
     ConsultaResponseDto converterParaResponseDto(Consulta model) {
         return new ConsultaResponseDto(
                 model.getId(),
-                model.getData_hora(),
+                model.getDataHora(),
                 model.getStatus(),
                 model.getObservacoes(),
                 model.getMedico().getId(),
@@ -115,4 +130,48 @@ public class ConsultaService {
                 () -> new ElementoNaoEncontradoException("Não foi encontrado paciente com o id " + id)
         );
     }
+
+    // MÉTODOS DAS REGRAS DE SERVIÇO -----------------------------------------------------------------------------------
+
+    private static final long DURACAO_DA_CONSULTA_EM_MINUTOS = 20L;
+
+    private void verificarDisponibilidadeDeHorarioDoMedico(Long idConsultaAtual,Long idMedico, LocalDateTime dataHoraConsulta) {
+
+        LocalDateTime dataHoraConsultaFim = dataHoraConsulta.plusMinutes(DURACAO_DA_CONSULTA_EM_MINUTOS);
+
+        List<Consulta> consultasProximasDoHorario = consultaRepository.findByMedico_IdAndDataHoraBetween(
+                idMedico,
+                dataHoraConsulta.minusMinutes(DURACAO_DA_CONSULTA_EM_MINUTOS),
+                dataHoraConsultaFim
+        );
+
+        for (Consulta consultaExistente : consultasProximasDoHorario) {
+
+            if (consultaExistente.getId().equals(idConsultaAtual)) {
+                continue;
+            }
+
+            if (!StatusConsulta.ativos().contains(consultaExistente.getStatus())) {
+                continue;
+            }
+
+            LocalDateTime dataHoraConsultaExistente = consultaExistente.getDataHora();
+            LocalDateTime dataHoraConsultaExistenteFim = dataHoraConsultaExistente.plusMinutes(DURACAO_DA_CONSULTA_EM_MINUTOS);
+
+            boolean haSobreposicaoDeHorarios = (
+                    dataHoraConsultaExistente.isBefore(dataHoraConsultaFim) && dataHoraConsultaExistenteFim.isAfter(dataHoraConsulta)
+                    );
+
+            if (haSobreposicaoDeHorarios) {
+                throw new RegraDeNegocioVioladaException(
+                        "O médico com id " + idMedico + " já possui consulta de " +
+                                dataHoraConsultaExistente.format(FORMATO_DATA_HORA) + " até " +
+                                dataHoraConsultaExistenteFim.format(FORMATO_DATA_HORA) +
+                                ", o que conflita com o horário solicitado (" + dataHoraConsulta.format(FORMATO_DATA_HORA) + ")."
+                );
+            }
+        }
+
+    }
+
 }
