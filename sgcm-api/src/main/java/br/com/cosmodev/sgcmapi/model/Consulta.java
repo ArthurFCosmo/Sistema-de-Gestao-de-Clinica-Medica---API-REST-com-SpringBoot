@@ -20,10 +20,11 @@ public class Consulta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "data_hora", nullable = false, length = 20)
     private LocalDateTime dataHora;
 
-    @Column(name = "data_hora", nullable = false, length = 20)
+
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private StatusConsulta status;
 

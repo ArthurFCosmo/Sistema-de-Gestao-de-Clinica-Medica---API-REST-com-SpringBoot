@@ -29,7 +29,9 @@ public record PacienteRequestDto(
         @PastOrPresent(message = "Data de nascimento não pode ser futura.")
         @JsonFormat(pattern = "dd/MM/yyyy")
         @NotNull(message = "Data de nascimento não pode ser nula")
-        LocalDate dataNascimento
+        LocalDate dataNascimento,
+
+        Boolean ativo
 
 ) {
 }

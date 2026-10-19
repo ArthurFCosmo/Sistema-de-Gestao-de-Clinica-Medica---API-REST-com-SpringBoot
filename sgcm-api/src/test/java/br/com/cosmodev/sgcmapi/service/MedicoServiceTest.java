@@ -49,6 +49,7 @@ public class MedicoServiceTest {
                 "123456-PE",
                 "arthur@email.com",
                 "(11) 99999-9999",
+                null,
                 1L
         );
 
@@ -80,6 +81,7 @@ public class MedicoServiceTest {
                 "123456-PE",
                 "arthur@email.com",
                 "(11) 99999-9999",
+                false,
                 1L
         );
         Especialidade especialidade = new Especialidade(1L, "Cardiologista", "Especialista em cardiologia.");
@@ -87,7 +89,7 @@ public class MedicoServiceTest {
         when(especialidadeRepository.findById(1L)).thenReturn(Optional.of(especialidade));
 
         // Execução
-        Medico resultado = medicoService.converterParaModel(7L, requestDtoFalsaCorreta, false);
+        Medico resultado = medicoService.converterParaModel(7L, requestDtoFalsaCorreta);
 
         // Confirmação
         assertAll(
@@ -298,7 +300,7 @@ public class MedicoServiceTest {
     void deveAtualizarMedicoComSucesso() {
 
         // Preparação: DTO recebido na requisição
-        MedicoRequestDto dto = medicoDto("Arthur Silva", "654321-SP", 1L);
+        MedicoRequestDto dto = medicoDto("Arthur Silva", "654321-SP", 1L, false);
         Medico medicoAtual = medicoModelo(1L, "Arthur Cosmo", "123456PE", true);
         Medico medicoAtualizado = medicoModelo(1L, "Arthur Silva", "654321SP", false);
 
@@ -307,7 +309,7 @@ public class MedicoServiceTest {
         when(medicoRepository.save(any(Medico.class))).thenReturn(medicoAtualizado);
 
         // Execução
-        MedicoResponseDto resultado = medicoService.atualizarMedico(1L, dto, false);
+        MedicoResponseDto resultado = medicoService.atualizarMedico(1L, dto);
 
         // Confirmação
         assertAll(
@@ -332,7 +334,7 @@ public class MedicoServiceTest {
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
-                () -> medicoService.atualizarMedico(999L, dto, false)
+                () -> medicoService.atualizarMedico(999L, dto)
         );
 
         assertEquals("Não foi encontrado médico com o id 999", exception.getMessage());
@@ -343,7 +345,11 @@ public class MedicoServiceTest {
     // ENTIDADES PRE MONTADAS PARA ELIMINAR BOILERPLATE ----------------------------------------------------------------
 
     private MedicoRequestDto medicoDto(String nome, String crm, Long idEspecialidade) {
-        return new MedicoRequestDto(nome, crm, "arthur@email.com", "(11) 99999-9999", idEspecialidade);
+        return medicoDto(nome, crm, idEspecialidade, null);
+    }
+
+    private MedicoRequestDto medicoDto(String nome, String crm, Long idEspecialidade, Boolean ativo) {
+        return new MedicoRequestDto(nome, crm, "arthur@email.com", "(11) 99999-9999", ativo, idEspecialidade);
     }
 
     private Medico medicoModelo(Long id, String nome, String crm, Boolean ativo) {

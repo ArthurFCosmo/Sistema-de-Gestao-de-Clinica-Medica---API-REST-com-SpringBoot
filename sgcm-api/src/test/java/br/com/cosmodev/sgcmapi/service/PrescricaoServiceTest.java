@@ -61,12 +61,17 @@ public class PrescricaoServiceTest {
 
     @Test
     void deveConverterDtoParaModelComIdEDataDeEmissaoComSucesso() {
-        PrescricaoRequestDto dto = prescricaoDto();
-        Consulta consulta = consultaModelo();
         LocalDate dataEmissao = LocalDate.of(2030, 5, 10);
+        PrescricaoRequestDto dto = new PrescricaoRequestDto(
+                "Tratamento para dor",
+                "Paracetamol 500mg",
+                1L,
+                dataEmissao
+        );
+        Consulta consulta = consultaModelo();
         when(consultaRepository.findById(1L)).thenReturn(Optional.of(consulta));
 
-        Prescricao resultado = prescricaoService.converterParaModel(7L, dto, dataEmissao);
+        Prescricao resultado = prescricaoService.converterParaModel(7L, dto);
 
         assertAll(
                 () -> assertEquals(7L, resultado.getId()),
@@ -122,7 +127,7 @@ public class PrescricaoServiceTest {
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
-                () -> prescricaoService.converterParaModel(7L, prescricaoDto(), LocalDate.of(2030, 5, 10))
+                () -> prescricaoService.converterParaModel(7L, prescricaoDto())
         );
 
         assertEquals("Não foi encontrada consulta com id 1", exception.getMessage());
@@ -222,7 +227,8 @@ public class PrescricaoServiceTest {
         Prescricao segundaPrescricao = prescricaoModelo(8L, new PrescricaoRequestDto(
                 "Tratamento para alergia",
                 "Loratadina 10mg",
-                1L
+                1L,
+                null
         ), LocalDate.of(2030, 5, 11));
         when(prescricaoRepository.findAll()).thenReturn(List.of(primeiraPrescricao, segundaPrescricao));
 
@@ -276,18 +282,19 @@ public class PrescricaoServiceTest {
 
     @Test
     void deveAtualizarPrescricaoComSucesso() {
+        LocalDate dataEmissao = LocalDate.of(2030, 5, 12);
         PrescricaoRequestDto dtoAtualizado = new PrescricaoRequestDto(
                 "Tratamento atualizado",
                 "Ibuprofeno 400mg",
-                1L
+                1L,
+                dataEmissao
         );
-        LocalDate dataEmissao = LocalDate.of(2030, 5, 12);
         when(prescricaoRepository.existsById(7L)).thenReturn(true);
         when(consultaRepository.findById(1L)).thenReturn(Optional.of(consultaModelo()));
         when(prescricaoRepository.save(any(Prescricao.class)))
                 .thenReturn(prescricaoModelo(7L, dtoAtualizado, dataEmissao));
 
-        PrescricaoResponseDto resultado = prescricaoService.atualizarPrescricao(7L, dtoAtualizado, dataEmissao);
+        PrescricaoResponseDto resultado = prescricaoService.atualizarPrescricao(7L, dtoAtualizado);
 
         assertAll(
                 () -> assertEquals(7L, resultado.id()),
@@ -307,7 +314,7 @@ public class PrescricaoServiceTest {
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
-                () -> prescricaoService.atualizarPrescricao(999L, prescricaoDto(), LocalDate.of(2030, 5, 10))
+                () -> prescricaoService.atualizarPrescricao(999L, prescricaoDto())
         );
 
         assertEquals("Não foi encontrada prescrição com id 999", exception.getMessage());
@@ -323,7 +330,7 @@ public class PrescricaoServiceTest {
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
-                () -> prescricaoService.atualizarPrescricao(7L, prescricaoDto(), LocalDate.of(2030, 5, 10))
+                () -> prescricaoService.atualizarPrescricao(7L, prescricaoDto())
         );
 
         assertEquals("Não foi encontrada consulta com id 1", exception.getMessage());
@@ -337,7 +344,7 @@ public class PrescricaoServiceTest {
 
         RegraDeNegocioVioladaException exception = assertThrows(
                 RegraDeNegocioVioladaException.class,
-                () -> prescricaoService.atualizarPrescricao(7L, prescricaoDto(), LocalDate.of(2030, 5, 10))
+                () -> prescricaoService.atualizarPrescricao(7L, prescricaoDto())
         );
 
         assertEquals(
@@ -357,7 +364,8 @@ public class PrescricaoServiceTest {
         return new PrescricaoRequestDto(
                 "Tratamento para dor",
                 "Paracetamol 500mg",
-                1L
+                1L,
+                null
         );
     }
 

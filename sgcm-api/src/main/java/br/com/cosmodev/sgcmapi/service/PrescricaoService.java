@@ -62,7 +62,7 @@ public class PrescricaoService {
         prescricaoRepository.deleteById(id);
     }
 
-    public PrescricaoResponseDto atualizarPrescricao(Long id, PrescricaoRequestDto dto, LocalDate dataEmissao) {
+    public PrescricaoResponseDto atualizarPrescricao(Long id, PrescricaoRequestDto dto) {
 
         if (!prescricaoRepository.existsById(id)) {
             throw new ElementoNaoEncontradoException("Não foi encontrada prescrição com id " + id);
@@ -77,7 +77,7 @@ public class PrescricaoService {
             throw new RegraDeNegocioVioladaException("A prescrição não pôde ser salva pois a consulta com id " + dto.idConsulta() + " não está descrita como realizada.");
         }
 
-        return converterParaResponseDto(prescricaoRepository.save(converterParaModel(id, dto, dataEmissao)));
+        return converterParaResponseDto(prescricaoRepository.save(converterParaModel(id, dto)));
     }
 
     // MÉTODOS DE CONVERSÃO DE ENTIDADES -------------------------------------------------------------------------------
@@ -92,12 +92,12 @@ public class PrescricaoService {
         );
     }
 
-    Prescricao converterParaModel(Long id, PrescricaoRequestDto dto, LocalDate dataEmissao) {
+    Prescricao converterParaModel(Long id, PrescricaoRequestDto dto) {
         return new Prescricao(
                 id,
                 dto.descricao(),
                 dto.medicamentos(),
-                dataEmissao,
+                dto.dataEmissao(),
                 buscarConsultaPorId(dto.idConsulta())
         );
     }
