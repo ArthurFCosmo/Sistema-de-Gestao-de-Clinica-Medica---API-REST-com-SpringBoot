@@ -71,4 +71,9 @@ public class GlobalExceptionHandlerTest {
 
     }
 
+    @Test
+    void deveMontarDtoCorretamenteParaMethodArgumentNotValidException () {
+        // todo: Criar esse teste
+    }
+
 }
