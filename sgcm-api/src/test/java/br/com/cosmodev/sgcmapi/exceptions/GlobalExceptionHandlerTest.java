@@ -6,8 +6,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -19,6 +25,13 @@ public class GlobalExceptionHandlerTest {
 
     @Mock
     private HttpServletRequest request;
+
+    // Para testes de exceptions lançadas pelo @validation que tem BindingResult
+    @Mock
+    private BindingResult bindingResult;
+
+    @Mock
+    private MethodArgumentNotValidException methodArgumentNotValidException;
 
     @Test
     void deveMontarDtoCorretamenteParaElementoNaoEncontradoException () {
@@ -73,7 +86,58 @@ public class GlobalExceptionHandlerTest {
 
     @Test
     void deveMontarDtoCorretamenteParaMethodArgumentNotValidException () {
-        // todo: Criar esse teste
+
+        // Preparação
+        when(request.getRequestURL())
+                .thenReturn(new StringBuffer("http://localhost:8080/medico"));
+
+        // Preparação: Criando o binding result que conterá os erros nos campos catchados pelo @Validation
+        when(methodArgumentNotValidException.getBindingResult()).thenReturn(bindingResult);
+        when(bindingResult.getFieldErrors()).thenReturn(List.of(
+                new FieldError("medicoRequestDto", "nome", "Nome não pode ser nulo ou em branco."),
+                new FieldError("medicoRequestDto", "telefone", "Telefone inválido. Use o formato (XX) XXXXX-XXXX.")
+        ));
+
+        // Execução
+        ResponseEntity<ExceptionTratadaResponseDto> resultado =
+                globalExceptionHandler.tratarMethodArgumentNotValidException(request, methodArgumentNotValidException);
+
+        // Confirmação
+        assertAll(
+                () -> assertEquals(HttpStatus.BAD_REQUEST, resultado.getStatusCode()),
+                () -> assertNotNull(resultado.getBody()),
+                () -> assertNotNull(resultado.getBody().timestamp()),
+                () -> assertEquals(400, resultado.getBody().status()),
+                () -> assertEquals("Bad Request", resultado.getBody().error()),
+                () -> assertEquals("nome: Nome não pode ser nulo ou em branco., telefone: Telefone inválido. Use o formato (XX) XXXXX-XXXX.",
+                        resultado.getBody().message()),
+                () -> assertEquals("http://localhost:8080/medico", resultado.getBody().path())
+        );
     }
 
+    @Test
+    void deveMontarDtoCorretamenteParaDataIntegrityViolationException () {
+
+        // Preparação: Mockando a URL da requisição
+        when(request.getRequestURL())
+                .thenReturn(new StringBuffer("http://localhost:8080/medico"));
+
+        // Preparação: Instanciando a exception real, já que é uma classe simples e o handler não usa a mensagem dela
+        DataIntegrityViolationException exception = new DataIntegrityViolationException("could not execute statement");
+
+        // Execução
+        ResponseEntity<ExceptionTratadaResponseDto> resultado = globalExceptionHandler.tratarDataIntegrityViolationException(request, exception);
+
+        // Confirmação
+        assertAll(
+                () -> assertEquals(HttpStatus.CONFLICT, resultado.getStatusCode()),
+                () -> assertNotNull(resultado.getBody()),
+                () -> assertNotNull(resultado.getBody().timestamp()),
+                () -> assertEquals(409, resultado.getBody().status()),
+                () -> assertEquals("Conflict", resultado.getBody().error()),
+                () -> assertEquals("A operação viola uma regra de integridade dos dados.", resultado.getBody().message()),
+                () -> assertEquals("http://localhost:8080/medico", resultado.getBody().path())
+        );
+
+    }
 }

@@ -2,6 +2,7 @@ package br.com.cosmodev.sgcmapi.exceptions;
 
 import br.com.cosmodev.sgcmapi.dtos.ExceptionTratadaResponseDto;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -34,6 +35,11 @@ public class GlobalExceptionHandler {
 
         return montarExceptionTratadaResponseDto(request, HttpStatus.BAD_REQUEST, mensagemFormatada);
 
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ExceptionTratadaResponseDto> tratarDataIntegrityViolationException (HttpServletRequest request, DataIntegrityViolationException exception) {
+        return montarExceptionTratadaResponseDto(request, HttpStatus.CONFLICT, "A operação viola uma regra de integridade dos dados.");
     }
 
     // Métodó para criar o DTO response e evitar boilerplate
