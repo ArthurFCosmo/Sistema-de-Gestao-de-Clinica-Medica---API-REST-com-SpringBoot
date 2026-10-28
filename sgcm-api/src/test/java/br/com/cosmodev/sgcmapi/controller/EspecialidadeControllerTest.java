@@ -2,6 +2,7 @@ package br.com.cosmodev.sgcmapi.controller;
 
 import br.com.cosmodev.sgcmapi.dtos.EspecialidadeRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.EspecialidadeResponseDto;
+import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
 import br.com.cosmodev.sgcmapi.service.EspecialidadeService;
 
 import org.junit.jupiter.api.Test;
@@ -12,16 +13,16 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(EspecialidadeController.class)
 public class EspecialidadeControllerTest {
@@ -123,6 +124,7 @@ public class EspecialidadeControllerTest {
         // PREPARAÇÃO: Retornando lista com todas as especialidades
         when(especialidadeService.listarEspecialidades()).thenReturn(listaDeRespostasFalsas());
 
+        // CONFIRMAÇÃO
         mockMvc.perform(get("/especialidade"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
@@ -135,6 +137,93 @@ public class EspecialidadeControllerTest {
 
     }
 
+    @Test
+    void deveRetornarListaVaziaEStatus200() throws Exception {
+
+        // PREPARAÇÃO: Retornando lista com todas as especialidades
+        when(especialidadeService.listarEspecialidades()).thenReturn(Collections.emptyList());
+
+        // CONFIRMAÇÃO
+        mockMvc.perform(get("/especialidade"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+
+        verify(especialidadeService).listarEspecialidades();
+
+    }
+
+    // TESTANDO OS ENDPOINTS (GET "/especialidade/id") -----------------------------------------------------------------
+
+    @Test
+    void deveRetornarEspecialidadePorIdEStatus200() throws Exception {
+
+        // PREPARAÇÃO
+        when(especialidadeService.buscarEspecialidadePorId(any(Long.class))).thenReturn(respostaFalsa());
+
+        mockMvc.perform(get("/especialidade/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(jsonResponseDtoFalso()));
+
+        verify(especialidadeService).buscarEspecialidadePorId(any(Long.class));
+
+    }
+
+    @Test
+    void deveLancarElementoNaoEncontradoExceptionEStatus404() throws Exception {
+
+        when(especialidadeService.buscarEspecialidadePorId(any(Long.class))).thenThrow(new ElementoNaoEncontradoException("Não foi encontrada especialidade com o id 2"));
+
+        mockMvc.perform(get("/especialidade/2"))
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertInstanceOf(ElementoNaoEncontradoException.class, result.getResolvedException()));
+
+        verify(especialidadeService).buscarEspecialidadePorId(2L);
+
+    }
+
+    @Test
+    void deveRetornarStatus400SeOIdNaoForNumerico() throws Exception {
+
+        mockMvc.perform(get("/especialidade/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertInstanceOf(MethodArgumentTypeMismatchException.class, result.getResolvedException()));
+
+        verify(especialidadeService, never()).buscarEspecialidadePorId(any());
+
+    }
+
+    // TESTANDO OS ENDPOINTS (DELETE "/especialidade/id") --------------------------------------------------------------
+
+    @Test
+    void deveDeletarComSucessoERetornarStatus204() throws Exception {
+
+        mockMvc.perform(delete("/especialidade/1"))
+                .andExpect(status().isNoContent());
+
+        verify(especialidadeService).deletarEspecialidade(any(Long.class));
+
+    }
+
+    @Test
+    void deveLancarElementoNaoEncontradoExceptionEStatus404AoDeletar() throws Exception {
+
+        doThrow(new ElementoNaoEncontradoException("Não foi encontrada especialidade com o id 2"))
+                .when(especialidadeService).deletarEspecialidade(2L);
+
+        mockMvc.perform(delete("/especialidade/2"))
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertInstanceOf(ElementoNaoEncontradoException.class, result.getResolvedException()));
+    }
+
+    @Test
+    void deveLancarRegraDeNegocioVioladaExceptionEStatus409() throws Exception {
+
+        // todo
+
+    }
+
+
     // ENTIDADES PRE MONTADAS E HELPERS PARA ELIMINAR BOILERPLATE ------------------------------------------------------
 
     private List<EspecialidadeResponseDto> listaDeRespostasFalsas() {
@@ -142,6 +231,15 @@ public class EspecialidadeControllerTest {
                 new EspecialidadeResponseDto(1L, "Cardiologista", "Especialista na saúde do coração e do sistema circulatório."),
                 new EspecialidadeResponseDto(2L, "Oncologista", "Especialista em diagnóstico e tratamentos de câncer.")
         );
+    }
+
+    private String jsonResponseDtoFalso() {
+        return """
+                {
+                    "nome": "Cardiologista",
+                    "descricao": "Especialista na saúde do coração e do sistema circulatório."
+                }
+                """;
     }
 
     private EspecialidadeResponseDto respostaFalsa() {
