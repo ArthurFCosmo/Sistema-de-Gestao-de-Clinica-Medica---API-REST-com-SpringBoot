@@ -53,8 +53,8 @@ Cada entidade possui camada completa de CRUD (criar, listar, buscar por ID, atua
 - [x] Camada de entidades (Model)
 - [x] Camada de repositório
 - [x] DTOs de Request/Response com validação
-- [ ] Camada de Service (CRUD + testes unitários) — *em desenvolvimento*
-- [ ] Camada de Controller
+- [x] Camada de Service (CRUD + testes unitários) — *em desenvolvimento*
+- [x] Camada de Controller
 - [ ] Tratamento centralizado de exceções
 - [ ] Documentação Swagger
 - [ ] Autenticação e autorização com Spring Security + JWT

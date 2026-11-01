@@ -3,6 +3,7 @@ package br.com.cosmodev.sgcmapi.controller;
 import br.com.cosmodev.sgcmapi.dtos.EspecialidadeRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.EspecialidadeResponseDto;
 import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
+import br.com.cosmodev.sgcmapi.exceptions.RegraDeNegocioVioladaException;
 import br.com.cosmodev.sgcmapi.service.EspecialidadeService;
 
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -36,7 +38,7 @@ public class EspecialidadeControllerTest {
     // TESTANDO OS ENDPOINTS (POST "/especialidade") -------------------------------------------------------------------
 
     @Test
-    void deveSalvarEspecialidadeERetornar201() throws Exception {
+    void deveRetornar201ESalvarAEspecialidadeNoPost() throws Exception {
 
         // PREPARAÇÃO: JSON enviado no body da requisição
         String requestBody = """
@@ -61,17 +63,17 @@ public class EspecialidadeControllerTest {
     }
 
     @Test
-    void deveLancarMethodArgumentNotValidExceptionERetornar400QuandoOBodyEstiverInvalido() throws Exception {
+    void deveRetornar400QuandoOBodyEstiverInvalidoNoPost() throws Exception {
 
         // PREPARAÇÃO: JSON enviado no body da requisição (nome em branco)
-        String requestBody = """
+        String requestBodyDefeituoso = """
                 {
                     "nome": "",
                     "descricao": "Especialista na saúde do coração e do sistema circulatório."
                 }
                 """;
 
-        mockMvc.perform(post("/especialidade").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        mockMvc.perform(post("/especialidade").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()));
 
@@ -80,10 +82,10 @@ public class EspecialidadeControllerTest {
     }
 
     @Test
-    void deveRetornar400QuandoJsonEstiverMalformado() throws Exception {
+    void deveRetornar400QuandoJsonEstiverMalformadoNoPost() throws Exception {
 
         // PREPARAÇÃO: JSON sintaticamente inválido (falta fechar a chave e as aspas)
-        String requestBody = """
+        String requestBodyDefeituoso = """
             {
                 "nome": "Cardiologista",
                 "descricao": "Especialista na saúde do coração
@@ -92,7 +94,7 @@ public class EspecialidadeControllerTest {
         // EXECUÇÃO E CONFIRMAÇÃO
         mockMvc.perform(post("/especialidade")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
+                        .content(requestBodyDefeituoso))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertInstanceOf(
                         HttpMessageNotReadableException.class,
@@ -104,7 +106,7 @@ public class EspecialidadeControllerTest {
     }
 
     @Test
-    void deveRetornar415QuandoContentTypeNaoForEnviado() throws Exception {
+    void deveRetornar415QuandoContentTypeNaoForEnviadoNoPost() throws Exception {
 
         // EXECUÇÃO E CONFIRMAÇÃO: requisição sem contentType
         mockMvc.perform(post("/especialidade")
@@ -119,7 +121,7 @@ public class EspecialidadeControllerTest {
     // TESTANDO OS ENDPOINTS (GET "/especialidade") --------------------------------------------------------------------
 
     @Test
-    void deveRetornarListaComTodasEspecialidadesEStatus200() throws Exception {
+    void deveRetornar200EListarEspecialidadesNoGet() throws Exception {
 
         // PREPARAÇÃO: Retornando lista com todas as especialidades
         when(especialidadeService.listarEspecialidades()).thenReturn(listaDeRespostasFalsas());
@@ -138,7 +140,7 @@ public class EspecialidadeControllerTest {
     }
 
     @Test
-    void deveRetornarListaVaziaEStatus200() throws Exception {
+    void deveRetornar200EListaVaziaNoGet() throws Exception {
 
         // PREPARAÇÃO: Retornando lista com todas as especialidades
         when(especialidadeService.listarEspecialidades()).thenReturn(Collections.emptyList());
@@ -156,7 +158,7 @@ public class EspecialidadeControllerTest {
     // TESTANDO OS ENDPOINTS (GET "/especialidade/id") -----------------------------------------------------------------
 
     @Test
-    void deveRetornarEspecialidadePorIdEStatus200() throws Exception {
+    void deveRetornar200EEspecialidadePorIdNoGetId() throws Exception {
 
         // PREPARAÇÃO
         when(especialidadeService.buscarEspecialidadePorId(any(Long.class))).thenReturn(respostaFalsa());
@@ -170,7 +172,7 @@ public class EspecialidadeControllerTest {
     }
 
     @Test
-    void deveLancarElementoNaoEncontradoExceptionEStatus404() throws Exception {
+    void deveRetornar404AoNaoEncontrarEspecialidadeNoGetId() throws Exception {
 
         when(especialidadeService.buscarEspecialidadePorId(any(Long.class))).thenThrow(new ElementoNaoEncontradoException("Não foi encontrada especialidade com o id 2"));
 
@@ -183,7 +185,7 @@ public class EspecialidadeControllerTest {
     }
 
     @Test
-    void deveRetornarStatus400SeOIdNaoForNumerico() throws Exception {
+    void deveRetornar400SeOIdNaoForNumericoNoGetId() throws Exception {
 
         mockMvc.perform(get("/especialidade/abc"))
                 .andExpect(status().isBadRequest())
@@ -196,7 +198,7 @@ public class EspecialidadeControllerTest {
     // TESTANDO OS ENDPOINTS (DELETE "/especialidade/id") --------------------------------------------------------------
 
     @Test
-    void deveDeletarComSucessoERetornarStatus204() throws Exception {
+    void deveRetornar204EDeletarEspecialidadeNoDelete() throws Exception {
 
         mockMvc.perform(delete("/especialidade/1"))
                 .andExpect(status().isNoContent());
@@ -206,7 +208,7 @@ public class EspecialidadeControllerTest {
     }
 
     @Test
-    void deveLancarElementoNaoEncontradoExceptionEStatus404AoDeletar() throws Exception {
+    void deveRetornar404AoNaoEncontrarEspecialidadeNoDelete() throws Exception {
 
         doThrow(new ElementoNaoEncontradoException("Não foi encontrada especialidade com o id 2"))
                 .when(especialidadeService).deletarEspecialidade(2L);
@@ -217,12 +219,101 @@ public class EspecialidadeControllerTest {
     }
 
     @Test
-    void deveLancarRegraDeNegocioVioladaExceptionEStatus409() throws Exception {
+    void deveRetornar409AoQuebrarRegraDeNegocioNoDelete() throws Exception {
 
-        // todo
+        doThrow(new RegraDeNegocioVioladaException("Especialidade com id 2 não pôde ser deletada pois existem médicos vinculados a ela."))
+                .when(especialidadeService).deletarEspecialidade(2L);
+
+        mockMvc.perform(delete("/especialidade/2"))
+                .andExpect(status().isConflict())
+                .andExpect(result -> assertInstanceOf(RegraDeNegocioVioladaException.class, result.getResolvedException()));
 
     }
 
+    // TESTANDO OS ENDPOINTS (PUT "/especialidade/id") --------------------------------------------------------------
+
+    @Test
+    void deveRetornar200EAtualizarEspecialidadeNoPut() throws Exception {
+
+        // PREPARAÇÃO: Criando o requestbody em JSON
+        String requestBody = """
+                {
+                    "nome": "Cardiologista",
+                    "descricao": "Especialista na saúde do coração e do sistema circulatório."
+                }
+                """;
+
+        when(especialidadeService.atualizarEspecialidade(anyLong(), any(EspecialidadeRequestDto.class))).thenReturn(respostaFalsa());
+
+        
+        mockMvc.perform(put("/especialidade/1").contentType(MediaType.APPLICATION_JSON).content(requestBody)) // EXECUÇÃO
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(1))
+            .andExpect(jsonPath("$.nome").value("Cardiologista"))
+            .andExpect(jsonPath("$.descricao").value("Especialista na saúde do coração e do sistema circulatório."));
+
+        verify(especialidadeService).atualizarEspecialidade(anyLong(), any(EspecialidadeRequestDto.class));
+        
+    }
+
+    @Test
+    void deveRetornar404AoNaoEncontrarEspecialidadeNoPut() throws Exception {
+
+        // PREPARAÇÃO: Criando o requestbody em JSON
+        String requestBody = """
+                {
+                    "nome": "Cardiologista",
+                    "descricao": "Especialista na saúde do coração e do sistema circulatório."
+                }
+                """;
+        
+        when(especialidadeService.atualizarEspecialidade(anyLong(), any(EspecialidadeRequestDto.class)))
+            .thenThrow(new ElementoNaoEncontradoException("Não foi encontrada especialidade com o id 2"));
+
+        mockMvc.perform(put("/especialidade/2").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+            .andExpect(status().isNotFound())
+            .andExpect(result -> assertInstanceOf(ElementoNaoEncontradoException.class, result.getResolvedException()));
+
+    }
+
+    @Test
+    void deveRetornar400QuandoOBodyEstiverInvalidoNoPut() throws Exception {
+
+        // PREPARAÇÃO: JSON enviado no body da requisição (nome em branco)
+        String requestBodyDefeituoso = """
+                {
+                    "nome": "",
+                    "descricao": "Especialista na saúde do coração e do sistema circulatório."
+                }
+                """;
+
+        mockMvc.perform(put("/especialidade/1").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()));
+
+        verify(especialidadeService, never()).atualizarEspecialidade(anyLong(), any());
+
+    }
+
+    @Test
+    void deveRetornar400QuandoJsonEstiverMalformadoNoPut() throws Exception {
+
+        // PREPARAÇÃO: JSON sintaticamente inválido (falta fechar a chave e as aspas)
+        String requestBodyDefeituoso = """
+            {
+                "nome": "Cardiologista",
+                "descricao": "Especialista na saúde do coração
+            """;
+
+        // EXECUÇÃO E CONFIRMAÇÃO
+        mockMvc.perform(put("/especialidade/1").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertInstanceOf(HttpMessageNotReadableException.class,result.getResolvedException()));
+
+        // CONFIRMAÇÃO: nada chegou ao service
+        verify(especialidadeService, never()).salvarEspecialidade(any());
+
+    }
 
     // ENTIDADES PRE MONTADAS E HELPERS PARA ELIMINAR BOILERPLATE ------------------------------------------------------
 
