@@ -9,7 +9,7 @@ public record ConsultaResponseDto(
 
         Long id,
 
-        @JsonFormat(pattern = "dd/MM/yy HH:mm:ss")
+        @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
         LocalDateTime dataHora,
 
         StatusConsulta status,

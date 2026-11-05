@@ -376,7 +376,7 @@ public class ConsultaControllerTest {
     private String jsonResponseDtoFalso() {
         return """
                 {
-                    "dataHora": "20/05/30 14:30:00",
+                    "dataHora": "20/05/2030 14:30:00",
                     "status": "AGENDADA",
                     "observacoes": "Consulta de rotina",
                     "idMedico": 1,

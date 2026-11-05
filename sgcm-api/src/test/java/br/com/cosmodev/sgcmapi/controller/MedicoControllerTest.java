@@ -89,7 +89,7 @@ public class MedicoControllerTest {
     @Test
     void deveRetornar400QuandoJsonEstiverMalformadoNoPost() throws Exception {
 
-        // PREPARAÇÃO: JSON sintaticamente inválido (falta fechar a chave e as aspas)
+        // PREPARAÇÃO: JSON sintaticamente inválido (campos faltantes + falta fechar a chave e as aspas)
         String requestBodyDefeituoso = """
                 {
                     "nome": "Dr. Arthur Cosmo",
