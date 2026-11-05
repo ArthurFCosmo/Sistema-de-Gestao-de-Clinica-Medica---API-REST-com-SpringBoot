@@ -311,7 +311,7 @@ public class EspecialidadeControllerTest {
                 .andExpect(result -> assertInstanceOf(HttpMessageNotReadableException.class,result.getResolvedException()));
 
         // CONFIRMAÇÃO: nada chegou ao service
-        verify(especialidadeService, never()).salvarEspecialidade(any());
+        verify(especialidadeService, never()).atualizarEspecialidade(any(), any());
 
     }
 
