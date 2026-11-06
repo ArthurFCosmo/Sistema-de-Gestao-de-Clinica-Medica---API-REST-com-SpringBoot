@@ -46,7 +46,6 @@ public class ConsultaControllerTest {
         String requestBody = """
                 {
                     "dataHora": "2030-05-20T14:30:00",
-                    "status": "AGENDADA",
                     "observacoes": "Consulta de rotina",
                     "idMedico": 1,
                     "idPaciente": 1
@@ -74,7 +73,6 @@ public class ConsultaControllerTest {
         String requestBodyDefeituoso = """
                 {
                     "dataHora": "2030-05-20T14:30:00",
-                    "status": "AGENDADA",
                     "observacoes": "Consulta de rotina",
                     "idPaciente": 1
                 }
@@ -95,7 +93,7 @@ public class ConsultaControllerTest {
         String requestBodyDefeituoso = """
                 {
                     "dataHora": "2030-05-20T14:30:00",
-                    "status": "AGENDADA
+                    "observacoes": "Consulta de rotina
                 """;
 
         // EXECUÇÃO E CONFIRMAÇÃO
@@ -127,7 +125,6 @@ public class ConsultaControllerTest {
         String requestBody = """
                 {
                     "dataHora": "2030-05-20T14:30:00",
-                    "status": "AGENDADA",
                     "observacoes": "Consulta de rotina",
                     "idMedico": 1,
                     "idPaciente": 1
@@ -257,21 +254,21 @@ public class ConsultaControllerTest {
         String requestBody = """
                 {
                     "dataHora": "2030-05-20T14:30:00",
-                    "status": "AGENDADA",
                     "observacoes": "Consulta de rotina",
                     "idMedico": 1,
                     "idPaciente": 1
                 }
                 """;
 
-        when(consultaService.atualizarConsulta(anyLong(), any(ConsultaRequestDto.class))).thenReturn(respostaFalsa());
+        when(consultaService.atualizarConsulta(anyLong(), any(ConsultaRequestDto.class), any(StatusConsulta.class)))
+                .thenReturn(new ConsultaResponseDto(1L, LocalDateTime.of(2030, 5, 20, 14, 30), StatusConsulta.CONFIRMADA, "Consulta de rotina", 1L, "Dr. Arthur Cosmo", "123456-SP", 1L, "Arthur Cosmo"));
 
-        mockMvc.perform(put("/consulta/1").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        mockMvc.perform(put("/consulta/1").param("status", "CONFIRMADA").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.status").value("AGENDADA"));
+                .andExpect(jsonPath("$.status").value("CONFIRMADA"));
 
-        verify(consultaService).atualizarConsulta(anyLong(), any(ConsultaRequestDto.class));
+        verify(consultaService).atualizarConsulta(eq(1L), any(ConsultaRequestDto.class), eq(StatusConsulta.CONFIRMADA));
 
     }
 
@@ -282,16 +279,15 @@ public class ConsultaControllerTest {
         String requestBody = """
                 {
                     "dataHora": "2030-05-20T14:30:00",
-                    "status": "AGENDADA",
                     "idMedico": 1,
                     "idPaciente": 1
                 }
                 """;
 
-        when(consultaService.atualizarConsulta(anyLong(), any(ConsultaRequestDto.class)))
+        when(consultaService.atualizarConsulta(anyLong(), any(ConsultaRequestDto.class), any(StatusConsulta.class)))
                 .thenThrow(new ElementoNaoEncontradoException("Não foi encontrada consulta com id 2"));
 
-        mockMvc.perform(put("/consulta/2").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        mockMvc.perform(put("/consulta/2").param("status", "AGENDADA").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isNotFound())
                 .andExpect(result -> assertInstanceOf(ElementoNaoEncontradoException.class, result.getResolvedException()));
 
@@ -304,16 +300,15 @@ public class ConsultaControllerTest {
         String requestBodyDefeituoso = """
                 {
                     "dataHora": "2030-05-20T14:30:00",
-                    "status": "AGENDADA",
                     "idPaciente": 1
                 }
                 """;
 
-        mockMvc.perform(put("/consulta/1").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
+        mockMvc.perform(put("/consulta/1").param("status", "AGENDADA").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()));
 
-        verify(consultaService, never()).atualizarConsulta(anyLong(), any());
+        verify(consultaService, never()).atualizarConsulta(anyLong(), any(), any(StatusConsulta.class));
 
     }
 
@@ -324,16 +319,16 @@ public class ConsultaControllerTest {
         String requestBodyDefeituoso = """
                 {
                     "dataHora": "2030-05-20T14:30:00",
-                    "status": "AGENDADA
+                    "observacoes": "Consulta de rotina
                 """;
 
         // EXECUÇÃO E CONFIRMAÇÃO
-        mockMvc.perform(put("/consulta/1").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
+        mockMvc.perform(put("/consulta/1").param("status", "AGENDADA").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertInstanceOf(HttpMessageNotReadableException.class, result.getResolvedException()));
 
         // CONFIRMAÇÃO: nada chegou ao service
-        verify(consultaService, never()).atualizarConsulta(anyLong(), any());
+        verify(consultaService, never()).atualizarConsulta(anyLong(), any(), any(StatusConsulta.class));
 
     }
 
@@ -344,7 +339,6 @@ public class ConsultaControllerTest {
         String requestBody = """
                 {
                     "dataHora": "2030-05-20T14:30:00",
-                    "status": "AGENDADA",
                     "observacoes": "Consulta de rotina",
                     "idMedico": 1,
                     "idPaciente": 1
@@ -352,13 +346,14 @@ public class ConsultaControllerTest {
                 """;
 
         // PREPARAÇÃO: service lança exception ao detectar sobreposição de horário
-        when(consultaService.atualizarConsulta(eq(1L), any(ConsultaRequestDto.class)))
+        when(consultaService.atualizarConsulta(eq(1L), any(ConsultaRequestDto.class), any(StatusConsulta.class)))
                 .thenThrow(new RegraDeNegocioVioladaException(
                         "O médico com id 1 já possui consulta de 20/05/30 14:20:00 até 20/05/30 14:40:00, o que conflita com o horário solicitado (20/05/30 14:30:00)."));
 
         // EXECUÇÃO E CONFIRMAÇÃO
         mockMvc.perform(put("/consulta/1")
-                        .contentType(MediaType.APPLICATION_JSON)
+                .param("status", "AGENDADA")
+                .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isConflict());
 

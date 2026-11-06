@@ -57,12 +57,12 @@ public class PacienteService {
 
     }
 
-    public PacienteResponseDto atualizarPaciente(Long id, PacienteRequestDto dto) {
+    public PacienteResponseDto atualizarPaciente(Long id, PacienteRequestDto dto, boolean ativo) {
         if (!pacienteRepository.existsById(id)) {
             throw new ElementoNaoEncontradoException("Não foi encontrado paciente com o id " + id);
         }
 
-        return converterParaResponseDto(pacienteRepository.save(converterParaModel(id, dto)));
+        return converterParaResponseDto(pacienteRepository.save(converterParaModel(id, dto, ativo)));
     }
 
 
@@ -82,7 +82,7 @@ public class PacienteService {
     }
 
     // Sobrecarga usada para poder definir o ID e "Ativo" da entidade na hora de atualizar no BD
-    Paciente converterParaModel(Long id, PacienteRequestDto dto) {
+    Paciente converterParaModel(Long id, PacienteRequestDto dto, boolean ativo) {
         return new Paciente(
                 id,
                 dto.nome(),
@@ -90,7 +90,7 @@ public class PacienteService {
                 dto.email(),
                 tratarDeixandoSoNumeros(dto.telefone()),
                 dto.dataNascimento(),
-                dto.ativo()
+                ativo
         );
     }
 

@@ -33,13 +33,8 @@ public class ConsultaService {
 
     public ConsultaResponseDto salvarConsulta(ConsultaRequestDto dto) {
 
-        // Permitindo que consultas inativas ignorem o filtro de conflito de horario
-        if (StatusConsulta.ativos().contains(dto.status())) {
-
-            //Não podem criar (marcar) consultas num intervalo sobrebosto de 20 minutos entre elas
-            verificarDisponibilidadeDeHorarioDoMedico(null, dto.idMedico(), dto.dataHora());
-
-        }
+        //Não podem criar (marcar) consultas num intervalo sobrebosto de 20 minutos entre elas
+        verificarDisponibilidadeDeHorarioDoMedico(null, dto.idMedico(), dto.dataHora());
 
         return converterParaResponseDto(consultaRepository.save(converterParaModel(dto)));
     }
@@ -62,20 +57,20 @@ public class ConsultaService {
         consultaRepository.deleteById(id);
     }
 
-    public ConsultaResponseDto atualizarConsulta(Long id, ConsultaRequestDto dto) {
+    public ConsultaResponseDto atualizarConsulta(Long id, ConsultaRequestDto dto, StatusConsulta status) {
         if (!consultaRepository.existsById(id)) {
             throw new ElementoNaoEncontradoException("Não foi encontrada consulta com id " + id);
         }
 
         // Permitindo que consultas inativas ignorem o filtro de conflito de horario
-        if (StatusConsulta.ativos().contains(dto.status())) {
+        if (StatusConsulta.ativos().contains(status)) {
 
             //Não podem criar (marcar) consultas num intervalo sobrebosto de 20 minutos entre elas
             verificarDisponibilidadeDeHorarioDoMedico(id, dto.idMedico(), dto.dataHora());
 
         }
 
-        return converterParaResponseDto(consultaRepository.save(converterParaModel(id, dto)));
+        return converterParaResponseDto(consultaRepository.save(converterParaModel(id, dto, status)));
     }
 
     // MÉTODOS DE CONVERSÃO DE ENTIDADES -------------------------------------------------------------------------------
@@ -84,19 +79,19 @@ public class ConsultaService {
         return new Consulta(
                 null,
                 dto.dataHora(),
-                dto.status(),
+                StatusConsulta.AGENDADA,
                 dto.observacoes(),
                 buscarMedicoPorId(dto.idMedico()),
                 buscarPacientePorId(dto.idPaciente())
         );
     }
 
-    // Sobrecarga do métodó para poder definir o Id na hora de atualizar no BD
-    Consulta converterParaModel(Long id, ConsultaRequestDto dto) {
+    // Sobrecarga do métodó para poder definir o Id e o status na hora de atualizar no BD
+    Consulta converterParaModel(Long id, ConsultaRequestDto dto, StatusConsulta status) {
         return new Consulta(
                 id,
                 dto.dataHora(),
-                dto.status(),
+                status,
                 dto.observacoes(),
                 buscarMedicoPorId(dto.idMedico()),
                 buscarPacientePorId(dto.idPaciente())

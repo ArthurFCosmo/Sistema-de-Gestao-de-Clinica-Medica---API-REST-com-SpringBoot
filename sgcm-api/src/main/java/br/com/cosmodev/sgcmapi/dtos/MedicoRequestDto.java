@@ -28,8 +28,6 @@ public record MedicoRequestDto(
         @NotBlank(message = "Telefone não pode ser nulo ou em branco.")
         String telefone,
 
-        Boolean ativo,
-
         @NotNull(message = "Id da especialidade é obrigatório.")
         Long idEspecialidade
 

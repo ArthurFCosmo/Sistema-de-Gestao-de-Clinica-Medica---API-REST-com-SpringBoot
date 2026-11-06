@@ -47,8 +47,7 @@ public class PacienteServiceTest {
                 "12345678909",
                 "arthur@email.com",
                 "(11) 99999-9999",
-                dataNascimento,
-                null
+                dataNascimento
         );
 
         // Execução
@@ -76,12 +75,11 @@ public class PacienteServiceTest {
                 "12345678909",
                 "arthur@email.com",
                 "(11) 99999-9999",
-                dataNascimento,
-                false
+                dataNascimento
         );
 
         // Execução
-        Paciente resultado = pacienteService.converterParaModel(7L, requestDtoFalsaCorreta);
+        Paciente resultado = pacienteService.converterParaModel(7L, requestDtoFalsaCorreta, false);
 
         // Confirmação
         assertAll(
@@ -137,8 +135,7 @@ public class PacienteServiceTest {
                 "12345678909",
                 "arthur@email.com",
                 "(11) 99999-9999",
-                dataNascimento,
-                null
+                dataNascimento
         );
 
         Paciente pacienteModelFalsoCorreto = new Paciente(
@@ -360,8 +357,7 @@ public class PacienteServiceTest {
                 "12345678900",
                 "arthursilva@email.com",
                 "(11) 99999-9999",
-                dataNascimento,
-                false
+                dataNascimento
         );
 
 
@@ -393,7 +389,7 @@ public class PacienteServiceTest {
         when(pacienteRepository.save(any(Paciente.class))).thenReturn(pacienteModelFalsoCorretoNovo);
 
         // Execução
-        PacienteResponseDto resultado = pacienteService.atualizarPaciente(id, requestDtoFalsaCorreta);
+        PacienteResponseDto resultado = pacienteService.atualizarPaciente(id, requestDtoFalsaCorreta, false);
 
         // Confirmação
         assertAll(
@@ -421,15 +417,14 @@ public class PacienteServiceTest {
                 "12345678900",
                 "arthursilva@email.com",
                 "(11) 99999-9999",
-                dataNascimento,
-                false
+                dataNascimento
         );
 
         when(pacienteRepository.existsById(999L)).thenReturn(false);
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
-                () -> pacienteService.atualizarPaciente(999L, requestDtoFalsaCorreta)
+                () -> pacienteService.atualizarPaciente(999L, requestDtoFalsaCorreta, false)
         );
 
         assertEquals("Não foi encontrado paciente com o id 999", exception.getMessage());

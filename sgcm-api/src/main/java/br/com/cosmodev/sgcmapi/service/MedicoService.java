@@ -59,12 +59,12 @@ public class MedicoService {
         medicoRepository.deleteById(id);
     }
 
-    public MedicoResponseDto atualizarMedico(Long id, MedicoRequestDto dto) {
+    public MedicoResponseDto atualizarMedico(Long id, MedicoRequestDto dto, boolean ativo) {
         if (!medicoRepository.existsById(id)) {
             throw new ElementoNaoEncontradoException("Não foi encontrado médico com o id " + id);
         }
 
-        return converterParaResponseDto(medicoRepository.save(converterParaModel(id, dto)));
+        return converterParaResponseDto(medicoRepository.save(converterParaModel(id, dto, ativo)));
     }
 
     // MÉTODOS DE CONVERSÃO DE ENTIDADES -------------------------------------------------------------------------------
@@ -82,14 +82,14 @@ public class MedicoService {
     }
 
     // Sobrecarga usada para definir o ID e "Ativo" da entidade na hora de atualizar no BD
-    Medico converterParaModel(Long id, MedicoRequestDto dto) {
+    Medico converterParaModel(Long id, MedicoRequestDto dto, boolean ativo) {
         return new Medico(
                 id,
                 dto.nome(),
                 tratarCrm(dto.crm()),
                 dto.email(),
                 tratarDeixandoSoNumeros(dto.telefone()),
-                dto.ativo(),
+                ativo,
                 buscarEspecialidade(dto.idEspecialidade())
         );
     }

@@ -21,6 +21,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -243,19 +244,19 @@ public class MedicoControllerTest {
                     "crm": "123456-SP",
                     "email": "arthur.medico@email.com",
                     "telefone": "(11) 99999-9999",
-                    "idEspecialidade": 1,
-                    "ativo": true
+                    "idEspecialidade": 1
                 }
                 """;
 
-        when(medicoService.atualizarMedico(anyLong(), any(MedicoRequestDto.class))).thenReturn(respostaFalsa());
+        when(medicoService.atualizarMedico(anyLong(), any(MedicoRequestDto.class), anyBoolean()))
+                .thenReturn(new MedicoResponseDto(1L, "Dr. Arthur Cosmo", "123456-SP", "arthur.medico@email.com", "(11) 99999-9999", false, "Cardiologista"));
 
-        mockMvc.perform(put("/medico/1").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        mockMvc.perform(put("/medico/1").param("ativo", "false").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.nome").value("Dr. Arthur Cosmo"));
 
-        verify(medicoService).atualizarMedico(anyLong(), any(MedicoRequestDto.class));
+        verify(medicoService).atualizarMedico(eq(1L), any(MedicoRequestDto.class), eq(false));
 
     }
 
@@ -273,10 +274,10 @@ public class MedicoControllerTest {
                 }
                 """;
 
-        when(medicoService.atualizarMedico(anyLong(), any(MedicoRequestDto.class)))
+        when(medicoService.atualizarMedico(anyLong(), any(MedicoRequestDto.class), anyBoolean()))
                 .thenThrow(new ElementoNaoEncontradoException("Não foi encontrado médico com o id 2"));
 
-        mockMvc.perform(put("/medico/2").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        mockMvc.perform(put("/medico/2").param("ativo", "true").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isNotFound())
                 .andExpect(result -> assertInstanceOf(ElementoNaoEncontradoException.class, result.getResolvedException()));
 
@@ -296,11 +297,11 @@ public class MedicoControllerTest {
                 }
                 """;
 
-        mockMvc.perform(put("/medico/1").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
+        mockMvc.perform(put("/medico/1").param("ativo", "true").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()));
 
-        verify(medicoService, never()).atualizarMedico(anyLong(), any());
+        verify(medicoService, never()).atualizarMedico(anyLong(), any(), anyBoolean());
 
     }
 
@@ -315,12 +316,12 @@ public class MedicoControllerTest {
                 """;
 
         // EXECUÇÃO E CONFIRMAÇÃO
-        mockMvc.perform(put("/medico/1").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
+        mockMvc.perform(put("/medico/1").param("ativo", "true").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertInstanceOf(HttpMessageNotReadableException.class, result.getResolvedException()));
 
         // CONFIRMAÇÃO: nada chegou ao service
-        verify(medicoService, never()).atualizarMedico(anyLong(), any());
+        verify(medicoService, never()).atualizarMedico(anyLong(), any(), anyBoolean());
 
     }
 

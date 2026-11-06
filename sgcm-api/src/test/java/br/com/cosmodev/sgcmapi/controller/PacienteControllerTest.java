@@ -21,6 +21,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -243,19 +244,19 @@ public class PacienteControllerTest {
                     "cpf": "12345678909",
                     "email": "arthur@email.com",
                     "telefone": "(11) 99999-9999",
-                    "dataNascimento": "20/05/1990",
-                    "ativo": true
+                    "dataNascimento": "20/05/1990"
                 }
                 """;
 
-        when(pacienteService.atualizarPaciente(anyLong(), any(PacienteRequestDto.class))).thenReturn(respostaFalsa());
+        when(pacienteService.atualizarPaciente(anyLong(), any(PacienteRequestDto.class), anyBoolean()))
+                .thenReturn(new PacienteResponseDto(1L, "Arthur Cosmo", "123.***.***-**", "arthur@email.com", "(11) 99999-9999", 36, false));
 
-        mockMvc.perform(put("/paciente/1").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        mockMvc.perform(put("/paciente/1").param("ativo", "false").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.nome").value("Arthur Cosmo"));
 
-        verify(pacienteService).atualizarPaciente(anyLong(), any(PacienteRequestDto.class));
+        verify(pacienteService).atualizarPaciente(eq(1L), any(PacienteRequestDto.class), eq(false));
 
     }
 
@@ -273,10 +274,10 @@ public class PacienteControllerTest {
                 }
                 """;
 
-        when(pacienteService.atualizarPaciente(anyLong(), any(PacienteRequestDto.class)))
+        when(pacienteService.atualizarPaciente(anyLong(), any(PacienteRequestDto.class), anyBoolean()))
                 .thenThrow(new ElementoNaoEncontradoException("Não foi encontrado paciente com o id 2"));
 
-        mockMvc.perform(put("/paciente/2").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        mockMvc.perform(put("/paciente/2").param("ativo", "true").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isNotFound())
                 .andExpect(result -> assertInstanceOf(ElementoNaoEncontradoException.class, result.getResolvedException()));
 
@@ -296,11 +297,11 @@ public class PacienteControllerTest {
                 }
                 """;
 
-        mockMvc.perform(put("/paciente/1").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
+        mockMvc.perform(put("/paciente/1").param("ativo", "true").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()));
 
-        verify(pacienteService, never()).atualizarPaciente(anyLong(), any());
+        verify(pacienteService, never()).atualizarPaciente(anyLong(), any(), anyBoolean());
 
     }
 
@@ -315,12 +316,12 @@ public class PacienteControllerTest {
                 """;
 
         // EXECUÇÃO E CONFIRMAÇÃO
-        mockMvc.perform(put("/paciente/1").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
+        mockMvc.perform(put("/paciente/1").param("ativo", "true").contentType(MediaType.APPLICATION_JSON).content(requestBodyDefeituoso))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertInstanceOf(HttpMessageNotReadableException.class, result.getResolvedException()));
 
         // CONFIRMAÇÃO: nada chegou ao service
-        verify(pacienteService, never()).atualizarPaciente(anyLong(), any());
+        verify(pacienteService, never()).atualizarPaciente(anyLong(), any(), anyBoolean());
 
     }
 

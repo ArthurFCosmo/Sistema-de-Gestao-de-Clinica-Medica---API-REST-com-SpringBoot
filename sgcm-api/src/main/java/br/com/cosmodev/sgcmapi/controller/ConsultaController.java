@@ -2,6 +2,7 @@ package br.com.cosmodev.sgcmapi.controller;
 
 import br.com.cosmodev.sgcmapi.dtos.ConsultaRequestDto;
 import br.com.cosmodev.sgcmapi.dtos.ConsultaResponseDto;
+import br.com.cosmodev.sgcmapi.enums.StatusConsulta;
 import br.com.cosmodev.sgcmapi.service.ConsultaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,8 +41,12 @@ public class ConsultaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ConsultaResponseDto> atualizarConsulta(@PathVariable Long id, @RequestBody @Valid ConsultaRequestDto dto) {
-        return ResponseEntity.ok(consultaService.atualizarConsulta(id, dto));
+    public ResponseEntity<ConsultaResponseDto> atualizarConsulta(
+            @PathVariable Long id,
+            @RequestParam StatusConsulta status,
+            @RequestBody @Valid ConsultaRequestDto dto
+    ) {
+        return ResponseEntity.ok(consultaService.atualizarConsulta(id, dto, status));
     }
 
 }

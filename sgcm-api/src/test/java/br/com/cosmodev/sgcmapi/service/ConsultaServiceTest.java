@@ -62,7 +62,7 @@ public class ConsultaServiceTest {
         assertAll(
                 () -> assertNull(resultado.getId()),
                 () -> assertEquals(dto.dataHora(), resultado.getDataHora()),
-                () -> assertEquals(dto.status(), resultado.getStatus()),
+                () -> assertEquals(StatusConsulta.AGENDADA, resultado.getStatus()),
                 () -> assertEquals(dto.observacoes(), resultado.getObservacoes()),
                 () -> assertEquals(medico, resultado.getMedico()),
                 () -> assertEquals(paciente, resultado.getPaciente())
@@ -79,12 +79,12 @@ public class ConsultaServiceTest {
         when(medicoRepository.findById(1L)).thenReturn(Optional.of(medico));
         when(pacienteRepository.findById(2L)).thenReturn(Optional.of(paciente));
 
-        Consulta resultado = consultaService.converterParaModel(7L, dto);
+        Consulta resultado = consultaService.converterParaModel(7L, dto, StatusConsulta.CONFIRMADA);
 
         assertAll(
                 () -> assertEquals(7L, resultado.getId()),
                 () -> assertEquals(dto.dataHora(), resultado.getDataHora()),
-                () -> assertEquals(dto.status(), resultado.getStatus()),
+                () -> assertEquals(StatusConsulta.CONFIRMADA, resultado.getStatus()),
                 () -> assertEquals(dto.observacoes(), resultado.getObservacoes()),
                 () -> assertEquals(medico, resultado.getMedico()),
                 () -> assertEquals(paciente, resultado.getPaciente())
@@ -160,7 +160,7 @@ public class ConsultaServiceTest {
                 () -> assertNotNull(resultado),
                 () -> assertEquals(3L, resultado.id()),
                 () -> assertEquals(dto.dataHora(), resultado.dataHora()),
-                () -> assertEquals(dto.status(), resultado.status()),
+                () -> assertEquals(StatusConsulta.AGENDADA, resultado.status()),
                 () -> assertEquals(dto.observacoes(), resultado.observacoes()),
                 () -> assertEquals(1L, resultado.idMedico()),
                 () -> assertEquals("Arthur Cosmo", resultado.nomeMedico()),
@@ -209,11 +209,10 @@ public class ConsultaServiceTest {
                 consultaModelo(3L, consultaDto()),
                 consultaModelo(4L, new ConsultaRequestDto(
                         LocalDateTime.of(2030, 5, 11, 15, 0),
-                        StatusConsulta.CONFIRMADA,
                         "Retorno",
                         1L,
                         2L
-                ))
+                ), StatusConsulta.CONFIRMADA)
         );
         when(consultaRepository.findAll()).thenReturn(consultas);
 
@@ -268,20 +267,19 @@ public class ConsultaServiceTest {
     void deveAtualizarConsultaComSucesso() {
         ConsultaRequestDto dtoAtualizado = new ConsultaRequestDto(
                 LocalDateTime.of(2030, 5, 12, 16, 0),
-                StatusConsulta.CONFIRMADA,
                 "Consulta atualizada",
                 1L,
                 2L
         );
         when(consultaRepository.existsById(3L)).thenReturn(true);
-        mockarSalvamento(3L, dtoAtualizado);
+        mockarSalvamento(3L, dtoAtualizado, StatusConsulta.CONFIRMADA);
 
-        ConsultaResponseDto resultado = consultaService.atualizarConsulta(3L, dtoAtualizado);
+        ConsultaResponseDto resultado = consultaService.atualizarConsulta(3L, dtoAtualizado, StatusConsulta.CONFIRMADA);
 
         assertAll(
                 () -> assertEquals(3L, resultado.id()),
                 () -> assertEquals(dtoAtualizado.dataHora(), resultado.dataHora()),
-                () -> assertEquals(dtoAtualizado.status(), resultado.status()),
+                () -> assertEquals(StatusConsulta.CONFIRMADA, resultado.status()),
                 () -> assertEquals("Consulta atualizada", resultado.observacoes()),
                 () -> assertEquals(1L, resultado.idMedico()),
                 () -> assertEquals(2L, resultado.idPaciente())
@@ -298,7 +296,7 @@ public class ConsultaServiceTest {
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
-                () -> consultaService.atualizarConsulta(999L, consultaDto())
+                () -> consultaService.atualizarConsulta(999L, consultaDto(), StatusConsulta.AGENDADA)
         );
 
         assertEquals("Não foi encontrada consulta com id 999", exception.getMessage());
@@ -397,30 +395,14 @@ public class ConsultaServiceTest {
     }
 
     @Test
-    void deveIgnorarVerificacaoDeConflitoAoSalvarConsultaComStatusCancelada() {
-        ConsultaRequestDto dtoCancelada = new ConsultaRequestDto(
-                DATA_HORA_BASE, StatusConsulta.CANCELADA, "Cancelada", 1L, 2L
-        );
-        mockarSalvamento(3L, dtoCancelada);
+    void deveCriarConsultaComStatusAgendada() {
+        ConsultaRequestDto dto = consultaDto();
+        mockarSalvamento(3L, dto);
 
-        ConsultaResponseDto resultado = consultaService.salvarConsulta(dtoCancelada);
+        ConsultaResponseDto resultado = consultaService.salvarConsulta(dto);
 
-        assertNotNull(resultado);
-        verify(consultaRepository, never()).findByMedico_IdAndDataHoraBetween(any(), any(), any());
-        verify(consultaRepository).save(any(Consulta.class));
-    }
-
-    @Test
-    void deveIgnorarVerificacaoDeConflitoAoSalvarConsultaComStatusRealizada() {
-        ConsultaRequestDto dtoRealizada = new ConsultaRequestDto(
-                DATA_HORA_BASE, StatusConsulta.REALIZADA, "Realizada", 1L, 2L
-        );
-        mockarSalvamento(3L, dtoRealizada);
-
-        ConsultaResponseDto resultado = consultaService.salvarConsulta(dtoRealizada);
-
-        assertNotNull(resultado);
-        verify(consultaRepository, never()).findByMedico_IdAndDataHoraBetween(any(), any(), any());
+        assertEquals(StatusConsulta.AGENDADA, resultado.status());
+        verify(consultaRepository).findByMedico_IdAndDataHoraBetween(any(), any(), any());
         verify(consultaRepository).save(any(Consulta.class));
     }
 
@@ -433,7 +415,7 @@ public class ConsultaServiceTest {
         mockarCandidatas(consultaExistente(3L, DATA_HORA_BASE, StatusConsulta.AGENDADA));
         mockarSalvamento(3L, dto);
 
-        ConsultaResponseDto resultado = consultaService.atualizarConsulta(3L, dto);
+        ConsultaResponseDto resultado = consultaService.atualizarConsulta(3L, dto, StatusConsulta.AGENDADA);
 
         assertEquals(3L, resultado.id());
         verify(consultaRepository).save(any(Consulta.class));
@@ -450,7 +432,7 @@ public class ConsultaServiceTest {
 
         RegraDeNegocioVioladaException exception = assertThrows(
                 RegraDeNegocioVioladaException.class,
-                () -> consultaService.atualizarConsulta(3L, dto)
+                () -> consultaService.atualizarConsulta(3L, dto, StatusConsulta.AGENDADA)
         );
 
         assertEquals(mensagemDeConflito(1L, DATA_HORA_BASE.plusMinutes(5), DATA_HORA_BASE), exception.getMessage());
@@ -460,12 +442,12 @@ public class ConsultaServiceTest {
     @Test
     void deveIgnorarVerificacaoDeConflitoAoAtualizarConsultaParaStatusCancelada() {
         ConsultaRequestDto dtoCancelada = new ConsultaRequestDto(
-                DATA_HORA_BASE, StatusConsulta.CANCELADA, "Cancelada", 1L, 2L
+                DATA_HORA_BASE, "Cancelada", 1L, 2L
         );
         when(consultaRepository.existsById(3L)).thenReturn(true);
-        mockarSalvamento(3L, dtoCancelada);
+        mockarSalvamento(3L, dtoCancelada, StatusConsulta.CANCELADA);
 
-        ConsultaResponseDto resultado = consultaService.atualizarConsulta(3L, dtoCancelada);
+        ConsultaResponseDto resultado = consultaService.atualizarConsulta(3L, dtoCancelada, StatusConsulta.CANCELADA);
 
         assertEquals(StatusConsulta.CANCELADA, resultado.status());
         verify(consultaRepository, never()).findByMedico_IdAndDataHoraBetween(any(), any(), any());
@@ -475,12 +457,12 @@ public class ConsultaServiceTest {
     @Test
     void deveIgnorarVerificacaoDeConflitoAoAtualizarConsultaParaStatusRealizada() {
         ConsultaRequestDto dtoRealizada = new ConsultaRequestDto(
-                DATA_HORA_BASE, StatusConsulta.REALIZADA, "Realizada", 1L, 2L
+                DATA_HORA_BASE, "Realizada", 1L, 2L
         );
         when(consultaRepository.existsById(3L)).thenReturn(true);
-        mockarSalvamento(3L, dtoRealizada);
+        mockarSalvamento(3L, dtoRealizada, StatusConsulta.REALIZADA);
 
-        ConsultaResponseDto resultado = consultaService.atualizarConsulta(3L, dtoRealizada);
+        ConsultaResponseDto resultado = consultaService.atualizarConsulta(3L, dtoRealizada, StatusConsulta.REALIZADA);
 
         assertEquals(StatusConsulta.REALIZADA, resultado.status());
         verify(consultaRepository, never()).findByMedico_IdAndDataHoraBetween(any(), any(), any());
@@ -495,9 +477,13 @@ public class ConsultaServiceTest {
     }
 
     private void mockarSalvamento(Long idSalvo, ConsultaRequestDto dto) {
+        mockarSalvamento(idSalvo, dto, StatusConsulta.AGENDADA);
+    }
+
+    private void mockarSalvamento(Long idSalvo, ConsultaRequestDto dto, StatusConsulta status) {
         when(medicoRepository.findById(1L)).thenReturn(Optional.of(medicoModelo()));
         when(pacienteRepository.findById(2L)).thenReturn(Optional.of(pacienteModelo()));
-        when(consultaRepository.save(any(Consulta.class))).thenReturn(consultaModelo(idSalvo, dto));
+        when(consultaRepository.save(any(Consulta.class))).thenReturn(consultaModelo(idSalvo, dto, status));
     }
 
     private String mensagemDeConflito(Long idMedico, LocalDateTime inicioExistente, LocalDateTime inicioSolicitado) {
@@ -512,13 +498,16 @@ public class ConsultaServiceTest {
     }
 
     private Consulta consultaModelo(Long id, ConsultaRequestDto dto) {
-        return new Consulta(id, dto.dataHora(), dto.status(), dto.observacoes(), medicoModelo(), pacienteModelo());
+        return consultaModelo(id, dto, StatusConsulta.AGENDADA);
+    }
+
+    private Consulta consultaModelo(Long id, ConsultaRequestDto dto, StatusConsulta status) {
+        return new Consulta(id, dto.dataHora(), status, dto.observacoes(), medicoModelo(), pacienteModelo());
     }
 
     private ConsultaRequestDto consultaDto() {
         return new ConsultaRequestDto(
                 DATA_HORA_BASE,
-                StatusConsulta.AGENDADA,
                 "Consulta de rotina",
                 1L,
                 2L

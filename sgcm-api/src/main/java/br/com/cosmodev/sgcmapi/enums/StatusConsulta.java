@@ -9,6 +9,7 @@ public enum StatusConsulta {
     CANCELADA;
 
     // Constantes ------------------------------------------------------------------------------------------------------
+    
     private static final List<StatusConsulta> listaDeStatusAtivos = List.of(CONFIRMADA, AGENDADA);
 
     public static List<StatusConsulta> ativos() {

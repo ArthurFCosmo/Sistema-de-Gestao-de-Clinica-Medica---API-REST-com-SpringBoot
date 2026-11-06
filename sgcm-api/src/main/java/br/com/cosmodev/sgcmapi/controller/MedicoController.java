@@ -40,8 +40,12 @@ public class MedicoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MedicoResponseDto> atualizarMedico(@PathVariable Long id, @RequestBody @Valid MedicoRequestDto dto) {
-        return ResponseEntity.ok(medicoService.atualizarMedico(id, dto));
+    public ResponseEntity<MedicoResponseDto> atualizarMedico(
+            @PathVariable Long id,
+            @RequestParam boolean ativo,
+            @RequestBody @Valid MedicoRequestDto dto
+    ) {
+        return ResponseEntity.ok(medicoService.atualizarMedico(id, dto, ativo));
     }
 
 }
