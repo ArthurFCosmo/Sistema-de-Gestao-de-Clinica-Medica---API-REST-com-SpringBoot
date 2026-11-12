@@ -10,7 +10,13 @@ import br.com.cosmodev.sgcmapi.model.Medico;
 import br.com.cosmodev.sgcmapi.repository.ConsultaRepository;
 import br.com.cosmodev.sgcmapi.repository.EspecialidadeRepository;
 import br.com.cosmodev.sgcmapi.repository.MedicoRepository;
+import br.com.cosmodev.sgcmapi.specification.MedicoSpecs;
 import lombok.RequiredArgsConstructor;
+
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -41,9 +47,9 @@ public class MedicoService {
         return converterParaResponseDto(medico);
     }
 
-    public List<MedicoResponseDto> listarMedicos() {
-        return medicoRepository.findAll().stream().map(this::converterParaResponseDto).toList();
-    }
+    // public List<MedicoResponseDto> listarMedicos() {
+    //     return medicoRepository.findAll().stream().map(this::converterParaResponseDto).toList();
+    // }
 
     public void deletarMedico(Long id) {
 
@@ -65,6 +71,20 @@ public class MedicoService {
         }
 
         return converterParaResponseDto(medicoRepository.save(converterParaModel(id, dto, ativo)));
+    }
+
+    // MÉTODOS DE CONSULTA PERSONALIZADOS ------------------------------------------------------------------------------
+
+    public Page<MedicoResponseDto> listarPersonalizado(Long especialidadeId, Pageable pageable) {
+
+        if (especialidadeId != null && !especialidadeRepository.existsById(especialidadeId)) {
+            throw new ElementoNaoEncontradoException("Não foi encontrado especialidade com o id " + especialidadeId);
+        }
+
+        Specification<Medico> spec = MedicoSpecs.comEspecialidade(especialidadeId);
+
+        return medicoRepository.findAll(spec, pageable).map(this::converterParaResponseDto);
+
     }
 
     // MÉTODOS DE CONVERSÃO DE ENTIDADES -------------------------------------------------------------------------------
