@@ -40,6 +40,11 @@ O endpoint @GetMapping("/{id}") continua existindo, trazendo o recurso específi
 
 ### Commit: 
 
+Author: Arthur Cosmo <arthurcosmoservices@gmail.com>
+Date:   Wed Nov 11 23:40:23 2026 -0300
+
+    Reestruturação no endpoint get da entidade Medico, agora com paginação e filtros personalizados implementados
+
 ### Próximo passo:
 
 Devem ser ajustadas as classes MedicoServiceTest e MedicoControllerTest. Também deve ser criada a classe MedicoSpecsTest com @DataJpaTest.
