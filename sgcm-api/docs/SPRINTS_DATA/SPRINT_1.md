@@ -2,10 +2,9 @@
 
 Neste arquivos são armazenadas informações a respeito do desenvolvimento do projeto.
 
-
 ---
 
-## Sprint 1: Endpoints para consultas com filtros personalizados para a entidade MEDICO
+## Sprint 1: Endpoints para consultas com filtros personalizados para a entidade MEDICO (Concluído)
 
 ### Contexto:
 
@@ -40,6 +39,7 @@ O endpoint @GetMapping("/{id}") continua existindo, trazendo o recurso específi
 
 ### Commit: 
 
+commit 43a51ec34987f56dcd92d90ac406926c9bab51e9 (HEAD -> staging, origin/staging)
 Author: Arthur Cosmo <arthurcosmoservices@gmail.com>
 Date:   Wed Nov 11 23:40:23 2026 -0300
 
@@ -48,20 +48,3 @@ Date:   Wed Nov 11 23:40:23 2026 -0300
 ### Próximo passo:
 
 Devem ser ajustadas as classes MedicoServiceTest e MedicoControllerTest. Também deve ser criada a classe MedicoSpecsTest com @DataJpaTest.
-
----
-
-## Sprint 3: Documentação da aplicação com Swagger
-
-### Contexto:
-
-Após as implementações das camadas service, controller e o tratamento de excecções, resta apenas a implementação da segurança com SpringSecurity.
-Antes dessa implementação, documentarei toda o sistema com o Swagger.
-
-### Todo:
-
-Implementar e revisar documentação com Swagger.
-
-### Sprint retrospective:
-
----

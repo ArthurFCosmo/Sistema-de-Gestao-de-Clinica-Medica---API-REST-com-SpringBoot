@@ -10,6 +10,12 @@ import br.com.cosmodev.sgcmapi.model.Medico;
 import br.com.cosmodev.sgcmapi.repository.ConsultaRepository;
 import br.com.cosmodev.sgcmapi.repository.EspecialidadeRepository;
 import br.com.cosmodev.sgcmapi.repository.MedicoRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +27,9 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -145,6 +154,7 @@ public class MedicoServiceTest {
 
     // TESTANDO MÉTODOS PADRÃO DO CRUD ---------------------------------------------------------------------------------
 
+    // POST ------------------------------------------------------------------------------------------------------------
     @Test
     void deveSalvarMedicoComSucesso() {
 
@@ -171,6 +181,7 @@ public class MedicoServiceTest {
         verify(medicoRepository, times(1)).save(any(Medico.class));
     }
 
+    // GET ------------------------------------------------------------------------------------------------------------
     @Test
     void deveBuscarMedicoPorIdComSucesso() {
 
@@ -193,6 +204,7 @@ public class MedicoServiceTest {
         verify(medicoRepository, times(1)).findById(1L);
     }
 
+    // GET ------------------------------------------------------------------------------------------------------------
     @Test
     void deveLancarExceptionCasoNaoEncontreMedicoPorId() {
 
@@ -206,43 +218,75 @@ public class MedicoServiceTest {
         assertEquals("Não foi encontrado médico com o id 999", exception.getMessage());
     }
 
+    // GET ------------------------------------------------------------------------------------------------------------
     @Test
-    void deveListarTodosMedicosComSucesso() {
+    void deveListarMedicosPersonalizadoComPaginacao() {
 
         // Preparação
+        Pageable pageable = PageRequest.of(0, 20, Sort.by("nome"));
         List<Medico> medicos = List.of(
                 medicoModelo(1L, "Arthur Cosmo", "123456PE", true),
                 medicoModelo(2L, "Ana Silva", "654321SP", false)
         );
-        when(medicoRepository.findAll()).thenReturn(medicos);
+        Page<Medico> pagina = new PageImpl<>(medicos, pageable, 2);
+        when(medicoRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(pagina);
 
         // Execução
-        List<MedicoResponseDto> resultado = medicoService.listarMedicos();
+        Page<MedicoResponseDto> resultado = medicoService.listarPersonalizado(null, pageable);
 
         // Confirmação
         assertAll(
-                () -> assertEquals(2, resultado.size()),
-                () -> assertEquals("Arthur Cosmo", resultado.get(0).nome()),
-                () -> assertEquals("Cardiologista", resultado.get(0).especialidade()),
-                () -> assertEquals("Ana Silva", resultado.get(1).nome()),
-                () -> assertFalse(resultado.get(1).ativo())
+                () -> assertEquals(2, resultado.getTotalElements()),
+                () -> assertEquals(1, resultado.getTotalPages()),
+                () -> assertEquals(2, resultado.getContent().size()),
+                () -> assertEquals("Arthur Cosmo", resultado.getContent().get(0).nome()),
+                () -> assertEquals("Cardiologista", resultado.getContent().get(0).especialidade()),
+                () -> assertEquals("Ana Silva", resultado.getContent().get(1).nome()),
+                () -> assertFalse(resultado.getContent().get(1).ativo())
         );
 
-        verify(medicoRepository, times(1)).findAll();
+        verify(especialidadeRepository, never()).existsById(anyLong());
+        verify(medicoRepository).findAll(any(Specification.class), eq(pageable));
     }
 
+    // GET ------------------------------------------------------------------------------------------------------------
     @Test
-    void deveListarZeroMedicos() {
+    void deveFiltrarMedicosPorEspecialidade() {
 
-        when(medicoRepository.findAll()).thenReturn(List.of());
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("nome"));
+        Page<Medico> pagina = new PageImpl<>(
+                List.of(medicoModelo(1L, "Arthur Cosmo", "123456PE", true)),
+                pageable,
+                1
+        );
+        when(especialidadeRepository.existsById(1L)).thenReturn(true);
+        when(medicoRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(pagina);
 
-        List<MedicoResponseDto> resultado = medicoService.listarMedicos();
+        Page<MedicoResponseDto> resultado = medicoService.listarPersonalizado(1L, pageable);
 
-        assertNotNull(resultado);
-        assertTrue(resultado.isEmpty());
-        verify(medicoRepository, times(1)).findAll();
+        assertEquals(1, resultado.getTotalElements());
+        assertEquals("Arthur Cosmo", resultado.getContent().get(0).nome());
+        verify(especialidadeRepository).existsById(1L);
+        verify(medicoRepository).findAll(any(Specification.class), eq(pageable));
     }
 
+    // GET ------------------------------------------------------------------------------------------------------------
+    @Test
+    void deveLancarExceptionAoFiltrarPorEspecialidadeInexistente() {
+
+        Pageable pageable = PageRequest.of(0, 20);
+        when(especialidadeRepository.existsById(999L)).thenReturn(false);
+
+        ElementoNaoEncontradoException exception = assertThrows(
+                ElementoNaoEncontradoException.class,
+                () -> medicoService.listarPersonalizado(999L, pageable)
+        );
+
+        assertEquals("Não foi encontrado especialidade com o id 999", exception.getMessage());
+        verify(medicoRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    // DELETE ---------------------------------------------------------------------------------------------------------
     @Test
     void deveDeletarMedicoComSucessoQuandoExistir() {
 
@@ -259,6 +303,7 @@ public class MedicoServiceTest {
         verify(medicoRepository, times(1)).deleteById(1L);
     }
 
+    // DELETE ---------------------------------------------------------------------------------------------------------
     @Test
     void deveLancarExceptionCasoNaoEncontreMedicoParaDeletar() {
 
@@ -275,6 +320,8 @@ public class MedicoServiceTest {
         verify(medicoRepository, never()).deleteById(anyLong());
     }
 
+
+    // DELETE ---------------------------------------------------------------------------------------------------------
     @Test
     void deveLancarExceptionAoDeletarMedicoComConsultasAtivas() {
 
@@ -294,6 +341,8 @@ public class MedicoServiceTest {
         verify(medicoRepository, never()).deleteById(anyLong());
     }
 
+
+    // UPDATE ---------------------------------------------------------------------------------------------------------
     @Test
     void deveAtualizarMedicoComSucesso() {
 
@@ -324,6 +373,8 @@ public class MedicoServiceTest {
         verify(medicoRepository, times(1)).save(medicoAtualizado);
     }
 
+
+    // UPDATE ---------------------------------------------------------------------------------------------------------
     @Test
     void deveLancarExceptionCasoNaoEncontreMedicoParaAtualizar() {
 

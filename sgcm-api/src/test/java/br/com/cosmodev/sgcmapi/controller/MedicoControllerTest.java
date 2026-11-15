@@ -6,8 +6,12 @@ import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
 import br.com.cosmodev.sgcmapi.exceptions.RegraDeNegocioVioladaException;
 import br.com.cosmodev.sgcmapi.service.MedicoService;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -18,10 +22,13 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -122,36 +129,63 @@ public class MedicoControllerTest {
     // TESTANDO OS ENDPOINTS (GET "/medico") --------------------------------------------------------------------------
 
     @Test
-    void deveRetornar200EListarMedicosNoGet() throws Exception {
+    void deveRetornar200EListarMedicosPaginadosNoGet() throws Exception {
 
-        // PREPARAÇÃO: Retornando lista com todos os médicos
-        when(medicoService.listarMedicos()).thenReturn(listaDeRespostasFalsas());
+        // PREPARAÇÃO: Retornando uma página com todos os médicos
+        Page<MedicoResponseDto> pagina = new PageImpl<>(listaDeRespostasFalsas());
+        when(medicoService.listarPersonalizado(isNull(), any(Pageable.class))).thenReturn(pagina);
 
         // CONFIRMAÇÃO
         mockMvc.perform(get("/medico"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].nome").value("Dr. Arthur Cosmo"))
-                .andExpect(jsonPath("$[1].id").value(2))
-                .andExpect(jsonPath("$[1].nome").value("Dra. Maria Silva"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].nome").value("Dr. Arthur Cosmo"))
+                .andExpect(jsonPath("$.content[1].id").value(2))
+                .andExpect(jsonPath("$.content[1].nome").value("Dra. Maria Silva"));
 
-        verify(medicoService).listarMedicos();
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(medicoService).listarPersonalizado(isNull(), pageableCaptor.capture());
+        assertEquals(20, pageableCaptor.getValue().getPageSize());
+        assertEquals("nome", pageableCaptor.getValue().getSort().getOrderFor("nome").getProperty());
 
     }
 
     @Test
-    void deveRetornar200EListaVaziaNoGet() throws Exception {
+    void deveRetornar200EConteudoVazioNoGet() throws Exception {
 
-        // PREPARAÇÃO: Retornando lista vazia de médicos
-        when(medicoService.listarMedicos()).thenReturn(Collections.emptyList());
+        // PREPARAÇÃO: Retornando uma página vazia
+        when(medicoService.listarPersonalizado(isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
 
         // CONFIRMAÇÃO
         mockMvc.perform(get("/medico"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
 
-        verify(medicoService).listarMedicos();
+        verify(medicoService).listarPersonalizado(isNull(), any(Pageable.class));
+
+    }
+
+    @Test
+    void devePassarFiltroEParametrosDePaginacaoNoGet() throws Exception {
+
+        when(medicoService.listarPersonalizado(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(listaDeRespostasFalsas()));
+
+        mockMvc.perform(get("/medico")
+                        .param("especialidadeId", "1")
+                        .param("page", "1")
+                        .param("size", "5")
+                        .param("sort", "nome,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2));
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(medicoService).listarPersonalizado(eq(1L), pageableCaptor.capture());
+        assertEquals(1, pageableCaptor.getValue().getPageNumber());
+        assertEquals(5, pageableCaptor.getValue().getPageSize());
+        assertEquals("DESC", pageableCaptor.getValue().getSort().getOrderFor("nome").getDirection().name());
 
     }
 
