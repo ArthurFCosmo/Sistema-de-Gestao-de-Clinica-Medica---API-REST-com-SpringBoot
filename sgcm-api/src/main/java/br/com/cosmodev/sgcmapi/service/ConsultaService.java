@@ -11,7 +11,12 @@ import br.com.cosmodev.sgcmapi.model.Paciente;
 import br.com.cosmodev.sgcmapi.repository.ConsultaRepository;
 import br.com.cosmodev.sgcmapi.repository.MedicoRepository;
 import br.com.cosmodev.sgcmapi.repository.PacienteRepository;
+import br.com.cosmodev.sgcmapi.specification.ConsultaSpecs;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -45,9 +50,9 @@ public class ConsultaService {
         ));
     }
 
-    public List<ConsultaResponseDto> listarConsultas() {
-        return consultaRepository.findAll().stream().map(this::converterParaResponseDto).toList();
-    };
+    // public List<ConsultaResponseDto> listarConsultas() {
+    //     return consultaRepository.findAll().stream().map(this::converterParaResponseDto).toList();
+    // };
 
     public void deletarConsultaPorId(Long id) {
         if (!consultaRepository.existsById(id)) {
@@ -71,6 +76,20 @@ public class ConsultaService {
         }
 
         return converterParaResponseDto(consultaRepository.save(converterParaModel(id, dto, status)));
+    }
+
+    // MÉTODOS DE CONSULTA DE PERSONALIZADOS ---------------------------------------------------------------------------
+
+    public Page<ConsultaResponseDto> listarPersonalizado(Long medicoId, Pageable pageable) {
+
+        if (medicoId != null && !medicoRepository.existsById(medicoId)) {
+            throw new ElementoNaoEncontradoException("Não foi encontrado médico com id " + medicoId);
+        }
+
+        Specification<Consulta> spec = ConsultaSpecs.comMedico(medicoId);
+
+        return consultaRepository.findAll(spec, pageable).map(this::converterParaResponseDto);
+
     }
 
     // MÉTODOS DE CONVERSÃO DE ENTIDADES -------------------------------------------------------------------------------

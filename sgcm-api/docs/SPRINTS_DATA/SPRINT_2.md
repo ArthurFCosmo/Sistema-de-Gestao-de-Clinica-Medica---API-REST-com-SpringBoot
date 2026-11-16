@@ -24,7 +24,13 @@ MedicoControllerTest (Atualizar)
 
 Todos os testes pendentes foram ajustados implementados e rodados com sucesso, levando em conta a nova arquitetura com paginação.
 
-### Commit: 
+### Commit:
+
+commit 309155d3c1159072cdb19d6ecc97e9fae0dde906 (HEAD -> staging, origin/staging, origin/main, origin/HEAD, main)
+Author: Arthur Cosmo <arthurcosmoservices@gmail.com>
+Date:   Sun Nov 15 18:01:35 2026 -0300
+
+    Implementação/atualização dos testes para o endpoint de consulta personalizada da entidade Medico
 
 ### Próximo passo:
 

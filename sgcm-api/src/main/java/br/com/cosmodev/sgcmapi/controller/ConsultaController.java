@@ -6,11 +6,18 @@ import br.com.cosmodev.sgcmapi.enums.StatusConsulta;
 import br.com.cosmodev.sgcmapi.service.ConsultaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/consulta")
@@ -24,10 +31,10 @@ public class ConsultaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(consultaService.salvarConsulta(dto));
     }
 
-    @GetMapping
-    public ResponseEntity<List<ConsultaResponseDto>> listarConsultas() {
-        return ResponseEntity.ok(consultaService.listarConsultas());
-    }
+    // @GetMapping
+    // public ResponseEntity<List<ConsultaResponseDto>> listarConsultas() {
+    //     return ResponseEntity.ok(consultaService.listarConsultas());
+    // }
 
     @GetMapping("/{id}")
     public ResponseEntity<ConsultaResponseDto> buscarConsultaPorId(@PathVariable Long id) {
@@ -49,4 +56,16 @@ public class ConsultaController {
         return ResponseEntity.ok(consultaService.atualizarConsulta(id, dto, status));
     }
 
+    
+    // ENDPOINTS PERSONALIZADOS -------------------------------------------------------------------------------------------
+
+    @GetMapping
+    public ResponseEntity<Page<ConsultaResponseDto>> listarPersonalizado(
+        @RequestParam(required = false) Long medicoId,
+        @PageableDefault(size = 20, sort = "dataHora") Pageable pageable
+    ) {
+
+        return ResponseEntity.ok(consultaService.listarPersonalizado(medicoId, pageable));
+
+    }
 }
