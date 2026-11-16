@@ -18,6 +18,16 @@ Implementar o filtro com paginação tanto em ConsultaService quanto em Consulta
 
 ### Sprint retrospective:
 
+O ConsultaService foi modificado, a classe ConsultaSpecs foi gerada sem problemas, e o ConsultaController teve seu endpoint @Get atualizado.
+
 ### Commit:
 
 ### Próximo passo:
+
+Implementar os testes:
+
+ConsultaSpecsTest (Criar)
+ConsultaServiceTest (Atualizar)
+ConsultaControllerTest (Atualizar)
+
+ e passá-los com sucesso.

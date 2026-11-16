@@ -361,17 +361,6 @@ public class PacienteServiceTest {
         );
 
 
-        // Preparação: Mock do paciente salvo no banco
-        Paciente pacienteModelFalsoCorreto = new Paciente(
-                1L,
-                "Arthur Cosmo",
-                "12345678909",
-                "arthur@email.com",
-                "11999999999",
-                dataNascimento,
-                true
-        );
-
         // Preparação: Mock da especialidade que será salva no banco após o métodó ser executado
         Paciente pacienteModelFalsoCorretoNovo = new Paciente(
                 1L,

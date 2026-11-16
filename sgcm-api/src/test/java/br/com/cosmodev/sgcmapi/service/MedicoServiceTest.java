@@ -219,7 +219,8 @@ public class MedicoServiceTest {
     }
 
     // GET ------------------------------------------------------------------------------------------------------------
-    @Test
+    @SuppressWarnings("unchecked")
+@Test
     void deveListarMedicosPersonalizadoComPaginacao() {
 
         // Preparação
@@ -250,7 +251,8 @@ public class MedicoServiceTest {
     }
 
     // GET ------------------------------------------------------------------------------------------------------------
-    @Test
+    @SuppressWarnings("unchecked")
+@Test
     void deveFiltrarMedicosPorEspecialidade() {
 
         Pageable pageable = PageRequest.of(0, 10, Sort.by("nome"));
@@ -271,7 +273,8 @@ public class MedicoServiceTest {
     }
 
     // GET ------------------------------------------------------------------------------------------------------------
-    @Test
+    @SuppressWarnings("unchecked")
+@Test
     void deveLancarExceptionAoFiltrarPorEspecialidadeInexistente() {
 
         Pageable pageable = PageRequest.of(0, 20);
@@ -348,7 +351,6 @@ public class MedicoServiceTest {
 
         // Preparação: DTO recebido na requisição
         MedicoRequestDto dto = medicoDto("Arthur Silva", "654321-SP", 1L);
-        Medico medicoAtual = medicoModelo(1L, "Arthur Cosmo", "123456PE", true);
         Medico medicoAtualizado = medicoModelo(1L, "Arthur Silva", "654321SP", false);
 
         when(medicoRepository.existsById(1L)).thenReturn(true);

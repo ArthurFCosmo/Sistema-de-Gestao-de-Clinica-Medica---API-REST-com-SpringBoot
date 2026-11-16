@@ -18,6 +18,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -203,8 +209,10 @@ public class ConsultaServiceTest {
         verify(consultaRepository).findById(999L);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    void deveListarTodasConsultasComSucesso() {
+    void deveListarConsultasPaginadasSemFiltro() {
+        Pageable pageable = PageRequest.of(0, 2, Sort.by("dataHora"));
         List<Consulta> consultas = List.of(
                 consultaModelo(3L, consultaDto()),
                 consultaModelo(4L, new ConsultaRequestDto(
@@ -214,30 +222,73 @@ public class ConsultaServiceTest {
                         2L
                 ), StatusConsulta.CONFIRMADA)
         );
-        when(consultaRepository.findAll()).thenReturn(consultas);
+        when(consultaRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(new PageImpl<>(consultas, pageable, 2));
 
-        List<ConsultaResponseDto> resultado = consultaService.listarConsultas();
+        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(null, pageable);
 
         assertAll(
-                () -> assertEquals(2, resultado.size()),
-                () -> assertEquals(3L, resultado.get(0).id()),
-                () -> assertEquals("Consulta de rotina", resultado.get(0).observacoes()),
-                () -> assertEquals(4L, resultado.get(1).id()),
-                () -> assertEquals("Retorno", resultado.get(1).observacoes()),
-                () -> assertEquals(StatusConsulta.CONFIRMADA, resultado.get(1).status())
+                () -> assertEquals(2, resultado.getTotalElements()),
+                () -> assertEquals(1, resultado.getTotalPages()),
+                () -> assertEquals(2, resultado.getContent().size()),
+                () -> assertEquals(3L, resultado.getContent().get(0).id()),
+                () -> assertEquals("Consulta de rotina", resultado.getContent().get(0).observacoes()),
+                () -> assertEquals(4L, resultado.getContent().get(1).id()),
+                () -> assertEquals("Retorno", resultado.getContent().get(1).observacoes()),
+                () -> assertEquals(StatusConsulta.CONFIRMADA, resultado.getContent().get(1).status())
         );
-        verify(consultaRepository).findAll();
+        verify(medicoRepository, never()).existsById(anyLong());
+        verify(consultaRepository).findAll(any(Specification.class), eq(pageable));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    void deveListarZeroConsultas() {
-        when(consultaRepository.findAll()).thenReturn(List.of());
+    void deveRetornarPaginaVaziaSemFiltro() {
+        Pageable pageable = PageRequest.of(0, 20, Sort.by("dataHora"));
+        when(consultaRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
-        List<ConsultaResponseDto> resultado = consultaService.listarConsultas();
+        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(null, pageable);
 
-        assertNotNull(resultado);
         assertTrue(resultado.isEmpty());
-        verify(consultaRepository).findAll();
+        assertEquals(0, resultado.getTotalElements());
+        verify(consultaRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void deveFiltrarConsultasPeloMedicoInformado() {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("dataHora"));
+        Page<Consulta> pagina = new PageImpl<>(
+                List.of(consultaModelo(3L, consultaDto())),
+                pageable,
+                1
+        );
+        when(medicoRepository.existsById(1L)).thenReturn(true);
+        when(consultaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(pagina);
+
+        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(1L, pageable);
+
+        assertEquals(1, resultado.getTotalElements());
+        assertEquals(3L, resultado.getContent().get(0).id());
+        assertEquals("Consulta de rotina", resultado.getContent().get(0).observacoes());
+        verify(medicoRepository).existsById(1L);
+        verify(consultaRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void deveLancarExceptionAoFiltrarConsultasPorMedicoInexistente() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(medicoRepository.existsById(999L)).thenReturn(false);
+
+        ElementoNaoEncontradoException exception = assertThrows(
+                ElementoNaoEncontradoException.class,
+                () -> consultaService.listarPersonalizado(999L, pageable)
+        );
+
+        assertEquals("Não foi encontrado médico com id 999", exception.getMessage());
+        verify(consultaRepository, never()).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test

@@ -7,8 +7,12 @@ import br.com.cosmodev.sgcmapi.exceptions.ElementoNaoEncontradoException;
 import br.com.cosmodev.sgcmapi.exceptions.RegraDeNegocioVioladaException;
 import br.com.cosmodev.sgcmapi.service.ConsultaService;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -17,13 +21,14 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -147,36 +152,73 @@ public class ConsultaControllerTest {
     // TESTANDO OS ENDPOINTS (GET "/consulta") ------------------------------------------------------------------------
 
     @Test
-    void deveRetornar200EListarConsultasNoGet() throws Exception {
+    void deveRetornar200EListarConsultasPaginadasNoGet() throws Exception {
 
-        // PREPARAÇÃO: Retornando lista com todas as consultas
-        when(consultaService.listarConsultas()).thenReturn(listaDeRespostasFalsas());
+        Page<ConsultaResponseDto> pagina = new PageImpl<>(listaDeRespostasFalsas());
+        when(consultaService.listarPersonalizado(isNull(), any(Pageable.class))).thenReturn(pagina);
 
-        // CONFIRMAÇÃO
         mockMvc.perform(get("/consulta"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].nomeMedico").value("Dr. Arthur Cosmo"))
-                .andExpect(jsonPath("$[1].id").value(2))
-                .andExpect(jsonPath("$[1].nomePaciente").value("Maria Silva"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].nomeMedico").value("Dr. Arthur Cosmo"))
+                .andExpect(jsonPath("$.content[1].id").value(2))
+                .andExpect(jsonPath("$.content[1].nomePaciente").value("Maria Silva"));
 
-        verify(consultaService).listarConsultas();
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(consultaService).listarPersonalizado(isNull(), pageableCaptor.capture());
+        assertEquals(20, pageableCaptor.getValue().getPageSize());
+        assertEquals("dataHora", pageableCaptor.getValue().getSort().getOrderFor("dataHora").getProperty());
 
     }
 
     @Test
-    void deveRetornar200EListaVaziaNoGet() throws Exception {
+    void deveRetornar200EConteudoVazioNoGet() throws Exception {
 
-        // PREPARAÇÃO: Retornando lista vazia de consultas
-        when(consultaService.listarConsultas()).thenReturn(Collections.emptyList());
+        when(consultaService.listarPersonalizado(isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
 
-        // CONFIRMAÇÃO
         mockMvc.perform(get("/consulta"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
 
-        verify(consultaService).listarConsultas();
+        verify(consultaService).listarPersonalizado(isNull(), any(Pageable.class));
+
+    }
+
+    @Test
+    void devePassarFiltroEPaginacaoNoGet() throws Exception {
+
+        when(consultaService.listarPersonalizado(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(listaDeRespostasFalsas()));
+
+        mockMvc.perform(get("/consulta")
+                        .param("medicoId", "1")
+                        .param("page", "1")
+                        .param("size", "5")
+                        .param("sort", "dataHora,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2));
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(consultaService).listarPersonalizado(eq(1L), pageableCaptor.capture());
+        assertEquals(1, pageableCaptor.getValue().getPageNumber());
+        assertEquals(5, pageableCaptor.getValue().getPageSize());
+        assertEquals("DESC", pageableCaptor.getValue().getSort().getOrderFor("dataHora").getDirection().name());
+
+    }
+
+    @Test
+    void deveRetornar404QuandoMedicoDoFiltroNaoExistir() throws Exception {
+
+        when(consultaService.listarPersonalizado(eq(999L), any(Pageable.class)))
+                .thenThrow(new ElementoNaoEncontradoException("Não foi encontrado médico com id 999"));
+
+        mockMvc.perform(get("/consulta").param("medicoId", "999"))
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertInstanceOf(ElementoNaoEncontradoException.class, result.getResolvedException()));
+
+        verify(consultaService).listarPersonalizado(eq(999L), any(Pageable.class));
 
     }
 
