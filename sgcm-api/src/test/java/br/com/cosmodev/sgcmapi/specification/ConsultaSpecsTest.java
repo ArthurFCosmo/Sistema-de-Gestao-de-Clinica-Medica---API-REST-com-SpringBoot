@@ -77,6 +77,48 @@ class ConsultaSpecsTest {
     }
 
     @Test
+    void deveRetornarConsultasDoPacienteComPaginacaoEOrdenacao() {
+        Especialidade especialidade = salvarEspecialidade();
+        Medico medico = salvarMedico("111111-PE", "medico@email.com", especialidade);
+        Paciente pacienteAlvo = salvarPaciente();
+        Paciente outroPaciente = entityManager.persistAndFlush(
+                new Paciente(null, "Bruno Lima", "12345678902", "outro@email.com", "11977776666",
+                        LocalDate.of(1985, 2, 1), true)
+        );
+        salvarConsulta(medico, pacienteAlvo, LocalDateTime.of(2030, 5, 10, 14, 30));
+        salvarConsulta(medico, pacienteAlvo, LocalDateTime.of(2030, 5, 11, 14, 30));
+        salvarConsulta(medico, pacienteAlvo, LocalDateTime.of(2030, 5, 12, 14, 30));
+        salvarConsulta(medico, outroPaciente, LocalDateTime.of(2030, 5, 13, 14, 30));
+
+        Pageable pageable = PageRequest.of(0, 2, Sort.by("dataHora"));
+
+        Page<Consulta> pagina = consultaRepository.findAll(ConsultaSpecs.comPaciente(pacienteAlvo.getId()), pageable);
+
+        assertAll(
+                () -> assertEquals(3, pagina.getTotalElements()),
+                () -> assertEquals(2, pagina.getTotalPages()),
+                () -> assertEquals(2, pagina.getContent().size()),
+                () -> assertTrue(pagina.getContent().stream()
+                        .allMatch(consulta -> consulta.getPaciente().getId().equals(pacienteAlvo.getId()))),
+                () -> assertEquals(LocalDateTime.of(2030, 5, 10, 14, 30), pagina.getContent().get(0).getDataHora()),
+                () -> assertEquals(LocalDateTime.of(2030, 5, 11, 14, 30), pagina.getContent().get(1).getDataHora())
+        );
+    }
+
+    @Test
+    void deveRetornarTodasAsConsultasQuandoIdDoPacienteForNulo() {
+        Especialidade especialidade = salvarEspecialidade();
+        Medico medico = salvarMedico("111111-PE", "medico@email.com", especialidade);
+        Paciente paciente = salvarPaciente();
+        salvarConsulta(medico, paciente, LocalDateTime.of(2030, 5, 10, 14, 30));
+        salvarConsulta(medico, paciente, LocalDateTime.of(2030, 5, 11, 14, 30));
+
+        List<Consulta> resultado = consultaRepository.findAll(ConsultaSpecs.comPaciente(null));
+
+        assertEquals(2, resultado.size());
+    }
+
+    @Test
     void deveRetornarListaVaziaQuandoMedicoNaoPossuirConsultas() {
         Especialidade especialidade = salvarEspecialidade();
         Medico medicoComConsulta = salvarMedico("111111-PE", "medico@email.com", especialidade);

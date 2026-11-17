@@ -225,7 +225,7 @@ public class ConsultaServiceTest {
         when(consultaRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(new PageImpl<>(consultas, pageable, 2));
 
-        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(null, pageable);
+        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(null, null, pageable);
 
         assertAll(
                 () -> assertEquals(2, resultado.getTotalElements()),
@@ -238,6 +238,7 @@ public class ConsultaServiceTest {
                 () -> assertEquals(StatusConsulta.CONFIRMADA, resultado.getContent().get(1).status())
         );
         verify(medicoRepository, never()).existsById(anyLong());
+        verify(pacienteRepository, never()).existsById(anyLong());
         verify(consultaRepository).findAll(any(Specification.class), eq(pageable));
     }
 
@@ -248,7 +249,7 @@ public class ConsultaServiceTest {
         when(consultaRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
-        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(null, pageable);
+        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(null, null, pageable);
 
         assertTrue(resultado.isEmpty());
         assertEquals(0, resultado.getTotalElements());
@@ -267,7 +268,7 @@ public class ConsultaServiceTest {
         when(medicoRepository.existsById(1L)).thenReturn(true);
         when(consultaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(pagina);
 
-        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(1L, pageable);
+        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(1L, null, pageable);
 
         assertEquals(1, resultado.getTotalElements());
         assertEquals(3L, resultado.getContent().get(0).id());
@@ -284,10 +285,46 @@ public class ConsultaServiceTest {
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
-                () -> consultaService.listarPersonalizado(999L, pageable)
+                () -> consultaService.listarPersonalizado(999L, null, pageable)
         );
 
         assertEquals("Não foi encontrado médico com id 999", exception.getMessage());
+        verify(consultaRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void deveFiltrarConsultasPeloPacienteInformado() {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("dataHora"));
+        Page<Consulta> pagina = new PageImpl<>(
+                List.of(consultaModelo(3L, consultaDto())),
+                pageable,
+                1
+        );
+        when(pacienteRepository.existsById(2L)).thenReturn(true);
+        when(consultaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(pagina);
+
+        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(null, 2L, pageable);
+
+        assertEquals(1, resultado.getTotalElements());
+        assertEquals(3L, resultado.getContent().get(0).id());
+        assertEquals(2L, resultado.getContent().get(0).idPaciente());
+        verify(pacienteRepository).existsById(2L);
+        verify(consultaRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void deveLancarExceptionAoFiltrarConsultasPorPacienteInexistente() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(pacienteRepository.existsById(999L)).thenReturn(false);
+
+        ElementoNaoEncontradoException exception = assertThrows(
+                ElementoNaoEncontradoException.class,
+                () -> consultaService.listarPersonalizado(null, 999L, pageable)
+        );
+
+        assertEquals("Não foi encontrado paciente com id 999", exception.getMessage());
         verify(consultaRepository, never()).findAll(any(Specification.class), any(Pageable.class));
     }
 

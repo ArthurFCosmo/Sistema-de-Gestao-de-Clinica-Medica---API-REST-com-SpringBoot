@@ -38,10 +38,10 @@ Após esse método de consulta em médico, seguiremos o roteiro de implementaç�
 
 | Done | Método | Endpoint | Descrição |
 | ---  |   ---  |    ---   |    ---    |
-|  [x]  | `GET` | `/api/medicos/especialidade/{especialidadeId}` | Listar médicos por especialidade |
-|  []  | `GET` | `/api/consultas/medico/{medicoId}` | Listar consultas de um médico |
-|  []  | `GET` | `/api/consultas/paciente/{pacienteId}` | Listar consultas de um paciente |
-|  []  | `GET` | `/api/consultas/status/{status}` | Listar consultas por status |
-|  []  | `GET` | `/api/consultas/medico/{medicoId}/status/{status}` | Listar consultas de um médico por status |
-|  []  | `GET` | `/api/consultas/data` | Listar consultas em uma data específica (parâmetro `?data=yyyy-MM-dd`) |
-|  []  | `GET` | `/api/prescricoes/consulta/{consultaId}` | Buscar prescrição de uma consulta |
+|  [x]  | `GET` | `/api/medico/especialidade/{especialidadeId}` | Listar médicos por especialidade |
+|  []  | `GET` | `/api/consulta/medico/{medicoId}` | Listar consultas de um médico |
+|  []  | `GET` | `/api/consulta/paciente/{pacienteId}` | Listar consultas de um paciente |
+|  []  | `GET` | `/api/consulta/status/{status}` | Listar consultas por status |
+|  []  | `GET` | `/api/consulta/medico/{medicoId}/status/{status}` | Listar consultas de um médico por status |
+|  []  | `GET` | `/api/consulta/data` | Listar consultas em uma data específica (parâmetro `?data=yyyy-MM-dd`) |
+|  []  | `GET` | `/api/prescricao/consulta/{consultaId}` | Buscar prescrição de uma consulta |

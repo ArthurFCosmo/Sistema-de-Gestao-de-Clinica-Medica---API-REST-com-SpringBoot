@@ -13,4 +13,8 @@ public class ConsultaSpecs {
         return (root, query, cb) -> medicoId == null ? null : cb.equal(root.get("medico").get("id"), medicoId);
     }
 
+    public static Specification<Consulta> comPaciente(Long pacienteId) {
+        return (root, query, cb) -> pacienteId == null ? null : cb.equal(root.get("paciente").get("id"), pacienteId);
+    }
+
 }
