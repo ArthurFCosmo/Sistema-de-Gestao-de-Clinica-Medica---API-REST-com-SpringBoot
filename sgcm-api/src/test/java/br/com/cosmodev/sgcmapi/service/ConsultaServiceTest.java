@@ -225,7 +225,7 @@ public class ConsultaServiceTest {
         when(consultaRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(new PageImpl<>(consultas, pageable, 2));
 
-        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(null, null, pageable);
+        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(null, null, null, pageable);
 
         assertAll(
                 () -> assertEquals(2, resultado.getTotalElements()),
@@ -249,7 +249,7 @@ public class ConsultaServiceTest {
         when(consultaRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
-        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(null, null, pageable);
+        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(null, null, null, pageable);
 
         assertTrue(resultado.isEmpty());
         assertEquals(0, resultado.getTotalElements());
@@ -268,7 +268,7 @@ public class ConsultaServiceTest {
         when(medicoRepository.existsById(1L)).thenReturn(true);
         when(consultaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(pagina);
 
-        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(1L, null, pageable);
+        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(1L, null, null, pageable);
 
         assertEquals(1, resultado.getTotalElements());
         assertEquals(3L, resultado.getContent().get(0).id());
@@ -285,7 +285,7 @@ public class ConsultaServiceTest {
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
-                () -> consultaService.listarPersonalizado(999L, null, pageable)
+                () -> consultaService.listarPersonalizado(999L, null, null, pageable)
         );
 
         assertEquals("Não foi encontrado médico com id 999", exception.getMessage());
@@ -304,7 +304,7 @@ public class ConsultaServiceTest {
         when(pacienteRepository.existsById(2L)).thenReturn(true);
         when(consultaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(pagina);
 
-        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(null, 2L, pageable);
+        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(null, 2L, null, pageable);
 
         assertEquals(1, resultado.getTotalElements());
         assertEquals(3L, resultado.getContent().get(0).id());
@@ -321,11 +321,36 @@ public class ConsultaServiceTest {
 
         ElementoNaoEncontradoException exception = assertThrows(
                 ElementoNaoEncontradoException.class,
-                () -> consultaService.listarPersonalizado(null, 999L, pageable)
+                () -> consultaService.listarPersonalizado(null, 999L, null, pageable)
         );
 
         assertEquals("Não foi encontrado paciente com id 999", exception.getMessage());
         verify(consultaRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void deveFiltrarConsultasPeloStatusInformado() {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("dataHora"));
+        Consulta consulta = consultaModelo(3L, consultaDto(), StatusConsulta.CONFIRMADA);
+        Page<Consulta> pagina = new PageImpl<>(List.of(consulta), pageable, 1);
+        when(consultaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(pagina);
+
+        Page<ConsultaResponseDto> resultado = consultaService.listarPersonalizado(
+                null,
+                null,
+                StatusConsulta.CONFIRMADA,
+                pageable
+        );
+
+        assertAll(
+                () -> assertEquals(1, resultado.getTotalElements()),
+                () -> assertEquals(3L, resultado.getContent().get(0).id()),
+                () -> assertEquals(StatusConsulta.CONFIRMADA, resultado.getContent().get(0).status())
+        );
+        verify(medicoRepository, never()).existsById(anyLong());
+        verify(pacienteRepository, never()).existsById(anyLong());
+        verify(consultaRepository).findAll(any(Specification.class), eq(pageable));
     }
 
     @Test

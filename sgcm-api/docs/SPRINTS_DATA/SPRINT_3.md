@@ -4,7 +4,7 @@ Neste arquivos são armazenadas informações a respeito do desenvolvimento do p
 
 ---
 
-## Sprint 3: Implementação do endpoint de filtrar consultas por Médico na rota /consulta usando paginação e reutilizando o antigo endpoint @GET.
+## Sprint 3: Implementação do endpoint de filtrar consultas por Médico na rota /consulta usando paginação e reutilizando o antigo endpoint @GET. (Concluído)
 
 ### Contexto:
 
@@ -14,7 +14,7 @@ Após a implementação dos métodos de consultas personalizados para a entidade
 
 Implementar o filtro com paginação tanto em ConsultaService quanto em ConsultaController, depois implementar os testes unitários e passá-los com sucesso.
 
-|  []  | `GET` | `/api/consulta/medico/{medicoId}` | Listar consultas de um médico |
+|  []  | `GET` | `/api/consulta` | Listar consultas de um médico |
 
 ### Sprint retrospective:
 

@@ -80,7 +80,7 @@ public class ConsultaService {
 
     // MÉTODOS DE CONSULTA DE PERSONALIZADOS ---------------------------------------------------------------------------
 
-    public Page<ConsultaResponseDto> listarPersonalizado(Long medicoId, Long pacienteId, Pageable pageable) {
+    public Page<ConsultaResponseDto> listarPersonalizado(Long medicoId, Long pacienteId, StatusConsulta status, Pageable pageable) {
 
         if (medicoId != null && !medicoRepository.existsById(medicoId)) {
             throw new ElementoNaoEncontradoException("Não foi encontrado médico com id " + medicoId);
@@ -92,11 +92,16 @@ public class ConsultaService {
         
         // Gerando um predicado vazio para o WHERE, que pede um AND (Por si só é uma specification que não filtra nada, deixa passar)
         Specification<Consulta> spec = (root, query, cb) -> cb.conjunction();
+
+        // Adicionando possíveis filtros que chegam como parametros da Request
         if (medicoId != null) {
             spec = spec.and(ConsultaSpecs.comMedico(medicoId));
         }
         if (pacienteId != null) {
             spec = spec.and(ConsultaSpecs.comPaciente(pacienteId));
+        }
+        if (status != null) {
+            spec = spec.and(ConsultaSpecs.comStatus(status));
         }
 
         return consultaRepository.findAll(spec, pageable).map(this::converterParaResponseDto);

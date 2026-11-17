@@ -12,14 +12,12 @@ Após as implementações dos endpoints básicos do CRUD, serão implementados m
 
 | Done | Método | Endpoint | Descrição |
 | ---  |   ---  |    ---   |    ---    |
-|  []  | `GET` | `/api/medico/especialidade/{especialidadeId}` | Listar médicos por especialidade |
-|  []  | `GET` | `/api/consulta/medico/{medicoId}` | Listar consultas de um médico |
-|  []  | `GET` | `/api/consulta/paciente/{pacienteId}` | Listar consultas de um paciente |
-|  []  | `GET` | `/api/consulta/status/{status}` | Listar consultas por status |
-|  []  | `GET` | `/api/consulta/medico/{medicoId}/status/{status}` | Listar consultas de um médico por status |
-|  []  | `GET` | `/api/consulta/data` | Listar consultas em uma data específica (parâmetro `?data=yyyy-MM-dd`) |
-|  []  | `GET` | `/api/prescricao/consulta/{consultaId}` | Buscar prescrição de uma consulta |
-
+|  []  | `GET` | `/api/medico` | Listar médicos por especialidade |
+|  []  | `GET` | `/api/consulta` | Listar consultas de um médico |
+|  []  | `GET` | `/api/consulta` | Listar consultas de um paciente |
+|  []  | `GET` | `/api/consulta` | Listar consultas por status |
+|  []  | `GET` | `/api/consulta` | Listar consultas em uma data específica (parâmetro `?data=yyyy-MM-dd`) |
+|  []  | `GET` | `/api/prescricao` | Buscar prescrição de uma consulta |
 
 Nesse sprint faremos APENAS o "Listar médicos por especialidade"
 

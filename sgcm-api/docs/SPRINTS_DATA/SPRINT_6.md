@@ -1,0 +1,41 @@
+# Dados e relatórios dos sprints
+
+Neste arquivos são armazenadas informações a respeito do desenvolvimento do projeto.
+
+---
+
+## Sprint 6: Implementação do filtro de consultas por status na entidade CONSULTA (Concluído)
+
+### Contexto:
+
+Dando continuidade à implementação de novas specifications no nosso endpoint de filtrar busca de consultas, implementaremos agora a specification de filtrar por status.
+
+### Todo:
+
+Implementar a specification:
+
+|  []  | `GET` | `/api/consulta` | Listar consultas por status |
+
+
+Também devem ser implementados os testes para as classes criadas/modificadas.
+
+### Sprint retrospective:
+
+O novo filtro foi criado ConsultaSpecs.comStatus(), o service e o controller receberam essa implementação.
+
+Os testes das 3 classes foram adaptados, e passaram com sucesso.
+
+### Commit:
+
+### Próximo passo:
+
+Após essa specification na entidade consulta, seguiremos ainda na mesma entidade, para o filtro por data.
+
+| Done | Método | Endpoint | Descrição |
+| ---  |   ---  |    ---   |    ---    |
+|  [x]  | `GET` | `/api/medico` | Listar médicos por especialidade |
+|  [x]  | `GET` | `/api/consulta` | Listar consultas de um médico |
+|  [x]  | `GET` | `/api/consulta` | Listar consultas de um paciente |
+|  [x]  | `GET` | `/api/consulta` | Listar consultas por status |
+|  []  | `GET` | `/api/consulta` | Listar consultas em uma data específica (parâmetro `?data=yyyy-MM-dd`) |
+|  []  | `GET` | `/api/prescricao` | Buscar prescrição de uma consulta |

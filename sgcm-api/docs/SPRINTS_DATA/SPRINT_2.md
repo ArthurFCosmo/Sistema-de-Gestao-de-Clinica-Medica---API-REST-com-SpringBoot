@@ -4,7 +4,7 @@ Neste arquivos são armazenadas informações a respeito do desenvolvimento do p
 
 ---
 
-## Sprint 2: Testes para consultas com filtros personalizados para a entidade MEDICO
+## Sprint 2: Testes para consultas com filtros personalizados para a entidade MEDICO (Concluído)
 
 ### Contexto:
 
@@ -38,10 +38,9 @@ Após esse método de consulta em médico, seguiremos o roteiro de implementaç�
 
 | Done | Método | Endpoint | Descrição |
 | ---  |   ---  |    ---   |    ---    |
-|  [x]  | `GET` | `/api/medico/especialidade/{especialidadeId}` | Listar médicos por especialidade |
-|  []  | `GET` | `/api/consulta/medico/{medicoId}` | Listar consultas de um médico |
-|  []  | `GET` | `/api/consulta/paciente/{pacienteId}` | Listar consultas de um paciente |
-|  []  | `GET` | `/api/consulta/status/{status}` | Listar consultas por status |
-|  []  | `GET` | `/api/consulta/medico/{medicoId}/status/{status}` | Listar consultas de um médico por status |
-|  []  | `GET` | `/api/consulta/data` | Listar consultas em uma data específica (parâmetro `?data=yyyy-MM-dd`) |
-|  []  | `GET` | `/api/prescricao/consulta/{consultaId}` | Buscar prescrição de uma consulta |
+|  [x]  | `GET` | `/api/medico` | Listar médicos por especialidade |
+|  []  | `GET` | `/api/consulta` | Listar consultas de um médico |
+|  []  | `GET` | `/api/consulta` | Listar consultas de um paciente |
+|  []  | `GET` | `/api/consulta` | Listar consultas por status |
+|  []  | `GET` | `/api/consulta` | Listar consultas em uma data específica (parâmetro `?data=yyyy-MM-dd`) |
+|  []  | `GET` | `/api/prescricao` | Buscar prescrição de uma consulta |

@@ -62,10 +62,11 @@ public class ConsultaController {
     public ResponseEntity<Page<ConsultaResponseDto>> listarPersonalizado(
         @RequestParam(required = false) Long medicoId,
         @RequestParam(required = false) Long pacienteId,
+        @RequestParam(required = false) StatusConsulta status,
         @PageableDefault(size = 20, sort = "dataHora") Pageable pageable
     ) {
 
-        return ResponseEntity.ok(consultaService.listarPersonalizado(medicoId, pacienteId, pageable));
+        return ResponseEntity.ok(consultaService.listarPersonalizado(medicoId, pacienteId, status, pageable));
 
     }
 }

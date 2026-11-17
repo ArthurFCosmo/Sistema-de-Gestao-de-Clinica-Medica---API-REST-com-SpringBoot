@@ -4,7 +4,7 @@ Neste arquivos são armazenadas informações a respeito do desenvolvimento do p
 
 ---
 
-## Sprint 5: Implementação do filtro de consultas por paciente na entidade CONSULTA usando paginação
+## Sprint 5: Implementação do filtro de consultas por paciente na entidade CONSULTA usando paginação (Concluído)
 
 ### Contexto:
 
@@ -12,11 +12,9 @@ Após a implementação dos métodos de consultas personalizados para a entidade
 
 ### Todo:
 
-Implementar o endpoint:
+Implementar a specification:
 
-|  []  | `GET` | `/api/consulta/paciente/{pacienteId}` | Listar consultas de um paciente |
-
-Esse endpoint deve modificar o @Get existente, assim como nos sprints passados.
+|  []  | `GET` | `/api/consulta/` | Listar consultas de um paciente |
 
 Também devem ser implementados os testes para as classes criadas/modificadas.
 
@@ -41,16 +39,21 @@ No consultaservice, começamos a usar specificantions encadeadas para gerar um p
 
 ### Commit:
 
+commit 3b27607f0433d587096b7a5184d5d10af5fe236f (HEAD -> staging, origin/staging, origin/main, origin/HEAD, main)
+Author: Arthur Cosmo <arthurcosmoservices@gmail.com>
+Date:   Mon Nov 16 21:42:05 2026 -0300
+
+    Adicao de nova specification no filtro de consulta, filtrando por paciente. Foram implementados testes para as modificacoes e novos cenarios de uso.
+
 ### Próximo passo:
 
 Após essa specification na entidade consulta, seguiremos ainda na mesma entidade, para o filtro por status.
 
 | Done | Método | Endpoint | Descrição |
 | ---  |   ---  |    ---   |    ---    |
-|  [x]  | `GET` | `/api/medico/especialidade/{especialidadeId}` | Listar médicos por especialidade |
-|  [x]  | `GET` | `/api/consulta/medico/{medicoId}` | Listar consultas de um médico |
-|  [x]  | `GET` | `/api/consulta/paciente/{pacienteId}` | Listar consultas de um paciente |
-|  []  | `GET` | `/api/consulta/status/{status}` | Listar consultas por status |
-|  []  | `GET` | `/api/consulta/medico/{medicoId}/status/{status}` | Listar consultas de um médico por status |
-|  []  | `GET` | `/api/consulta/data` | Listar consultas em uma data específica (parâmetro `?data=yyyy-MM-dd`) |
-|  []  | `GET` | `/api/prescricao/consulta/{consultaId}` | Buscar prescrição de uma consulta |
+|  [x]  | `GET` | `/api/medico` | Listar médicos por especialidade |
+|  [x]  | `GET` | `/api/consulta` | Listar consultas de um médico |
+|  [x]  | `GET` | `/api/consulta` | Listar consultas de um paciente |
+|  []  | `GET` | `/api/consulta` | Listar consultas por status |
+|  []  | `GET` | `/api/consulta` | Listar consultas em uma data específica (parâmetro `?data=yyyy-MM-dd`) |
+|  []  | `GET` | `/api/prescricao` | Buscar prescrição de uma consulta |

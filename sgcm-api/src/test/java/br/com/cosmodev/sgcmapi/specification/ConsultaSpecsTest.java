@@ -119,6 +119,45 @@ class ConsultaSpecsTest {
     }
 
     @Test
+    void deveRetornarConsultasDoStatusInformadoComPaginacaoEOrdenacao() {
+        Especialidade especialidade = salvarEspecialidade();
+        Medico medico = salvarMedico("111111-PE", "medico@email.com", especialidade);
+        Paciente paciente = salvarPaciente();
+        salvarConsulta(medico, paciente, LocalDateTime.of(2030, 5, 10, 14, 30), StatusConsulta.CONFIRMADA);
+        salvarConsulta(medico, paciente, LocalDateTime.of(2030, 5, 11, 14, 30), StatusConsulta.AGENDADA);
+        salvarConsulta(medico, paciente, LocalDateTime.of(2030, 5, 12, 14, 30), StatusConsulta.CONFIRMADA);
+
+        Pageable pageable = PageRequest.of(0, 1, Sort.by("dataHora"));
+
+        Page<Consulta> pagina = consultaRepository.findAll(
+                ConsultaSpecs.comStatus(StatusConsulta.CONFIRMADA),
+                pageable
+        );
+
+        assertAll(
+                () -> assertEquals(2, pagina.getTotalElements()),
+                () -> assertEquals(2, pagina.getTotalPages()),
+                () -> assertEquals(1, pagina.getContent().size()),
+                () -> assertTrue(pagina.getContent().stream()
+                        .allMatch(consulta -> consulta.getStatus() == StatusConsulta.CONFIRMADA)),
+                () -> assertEquals(LocalDateTime.of(2030, 5, 10, 14, 30), pagina.getContent().get(0).getDataHora())
+        );
+    }
+
+    @Test
+    void deveRetornarTodasAsConsultasQuandoStatusForNulo() {
+        Especialidade especialidade = salvarEspecialidade();
+        Medico medico = salvarMedico("111111-PE", "medico@email.com", especialidade);
+        Paciente paciente = salvarPaciente();
+        salvarConsulta(medico, paciente, LocalDateTime.of(2030, 5, 10, 14, 30), StatusConsulta.CONFIRMADA);
+        salvarConsulta(medico, paciente, LocalDateTime.of(2030, 5, 11, 14, 30), StatusConsulta.AGENDADA);
+
+        List<Consulta> resultado = consultaRepository.findAll(ConsultaSpecs.comStatus(null));
+
+        assertEquals(2, resultado.size());
+    }
+
+    @Test
     void deveRetornarListaVaziaQuandoMedicoNaoPossuirConsultas() {
         Especialidade especialidade = salvarEspecialidade();
         Medico medicoComConsulta = salvarMedico("111111-PE", "medico@email.com", especialidade);
@@ -151,8 +190,12 @@ class ConsultaSpecsTest {
     }
 
     private Consulta salvarConsulta(Medico medico, Paciente paciente, LocalDateTime dataHora) {
+        return salvarConsulta(medico, paciente, dataHora, StatusConsulta.AGENDADA);
+    }
+
+    private Consulta salvarConsulta(Medico medico, Paciente paciente, LocalDateTime dataHora, StatusConsulta status) {
         return entityManager.persistAndFlush(
-                new Consulta(null, dataHora, StatusConsulta.AGENDADA, null, medico, paciente)
+                new Consulta(null, dataHora, status, null, medico, paciente)
         );
     }
 }
