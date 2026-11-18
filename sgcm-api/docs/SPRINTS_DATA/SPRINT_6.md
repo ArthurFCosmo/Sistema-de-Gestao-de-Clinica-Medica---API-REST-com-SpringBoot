@@ -27,6 +27,12 @@ Os testes das 3 classes foram adaptados, e passaram com sucesso.
 
 ### Commit:
 
+commit 4568f19a6054b76f0ef5096533499bae484622e3 (HEAD -> staging, origin/staging, origin/main, origin/HEAD, main)
+Author: Arthur Cosmo <arthurcosmoservices@gmail.com>
+Date:   Tue Nov 17 19:41:33 2026 -0300
+
+    Implementacao do filtro de consultas por status no endpoint @Get + testes
+
 ### Próximo passo:
 
 Após essa specification na entidade consulta, seguiremos ainda na mesma entidade, para o filtro por data.

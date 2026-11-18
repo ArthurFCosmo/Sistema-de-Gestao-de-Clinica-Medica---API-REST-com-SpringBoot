@@ -1,5 +1,8 @@
 package br.com.cosmodev.sgcmapi.specification;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import org.springframework.data.jpa.domain.Specification;
 
 import br.com.cosmodev.sgcmapi.model.Consulta;
@@ -22,4 +25,17 @@ public class ConsultaSpecs {
         return (root, query, cb) -> status == null ? null : cb.equal(root.get("status"), status);
     }
 
+    public static Specification<Consulta> comData(LocalDate data) {
+        return (root, query, cb) -> {
+            if (data == null) { return null; }
+
+            LocalDateTime dataInicio = data.atStartOfDay();
+            LocalDateTime dataFim = data.plusDays(1).atStartOfDay();
+
+            return cb.and(
+                cb.greaterThanOrEqualTo(root.get("dataHora"), dataInicio),
+                cb.lessThan(root.get("dataHora"), dataFim)
+            );
+        };
+    }
 }

@@ -158,6 +158,36 @@ class ConsultaSpecsTest {
     }
 
     @Test
+    void deveRetornarConsultasSomenteNaDataInformada() {
+        Especialidade especialidade = salvarEspecialidade();
+        Medico medico = salvarMedico("111111-PE", "medico@email.com", especialidade);
+        Paciente paciente = salvarPaciente();
+        salvarConsulta(medico, paciente, LocalDateTime.of(2030, 5, 9, 23, 59, 59));
+        salvarConsulta(medico, paciente, LocalDateTime.of(2030, 5, 10, 0, 0));
+        salvarConsulta(medico, paciente, LocalDateTime.of(2030, 5, 10, 23, 59, 59));
+        salvarConsulta(medico, paciente, LocalDateTime.of(2030, 5, 11, 0, 0));
+
+        List<Consulta> resultado = consultaRepository.findAll(ConsultaSpecs.comData(LocalDate.of(2030, 5, 10)));
+
+        assertEquals(2, resultado.size());
+        assertTrue(resultado.stream().allMatch(consulta ->
+                consulta.getDataHora().toLocalDate().equals(LocalDate.of(2030, 5, 10))));
+    }
+
+    @Test
+    void deveRetornarTodasAsConsultasQuandoDataForNula() {
+        Especialidade especialidade = salvarEspecialidade();
+        Medico medico = salvarMedico("111111-PE", "medico@email.com", especialidade);
+        Paciente paciente = salvarPaciente();
+        salvarConsulta(medico, paciente, LocalDateTime.of(2030, 5, 10, 14, 30));
+        salvarConsulta(medico, paciente, LocalDateTime.of(2030, 5, 11, 14, 30));
+
+        List<Consulta> resultado = consultaRepository.findAll(ConsultaSpecs.comData(null));
+
+        assertEquals(2, resultado.size());
+    }
+
+    @Test
     void deveRetornarListaVaziaQuandoMedicoNaoPossuirConsultas() {
         Especialidade especialidade = salvarEspecialidade();
         Medico medicoComConsulta = salvarMedico("111111-PE", "medico@email.com", especialidade);

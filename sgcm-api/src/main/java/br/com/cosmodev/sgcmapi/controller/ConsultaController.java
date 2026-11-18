@@ -7,15 +7,15 @@ import br.com.cosmodev.sgcmapi.service.ConsultaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDate;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 @RestController
@@ -63,10 +63,11 @@ public class ConsultaController {
         @RequestParam(required = false) Long medicoId,
         @RequestParam(required = false) Long pacienteId,
         @RequestParam(required = false) StatusConsulta status,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
         @PageableDefault(size = 20, sort = "dataHora") Pageable pageable
     ) {
 
-        return ResponseEntity.ok(consultaService.listarPersonalizado(medicoId, pacienteId, status, pageable));
+        return ResponseEntity.ok(consultaService.listarPersonalizado(medicoId, pacienteId, status, data, pageable));
 
     }
 }

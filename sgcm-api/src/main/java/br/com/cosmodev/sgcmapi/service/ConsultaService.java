@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -80,7 +81,7 @@ public class ConsultaService {
 
     // MÉTODOS DE CONSULTA DE PERSONALIZADOS ---------------------------------------------------------------------------
 
-    public Page<ConsultaResponseDto> listarPersonalizado(Long medicoId, Long pacienteId, StatusConsulta status, Pageable pageable) {
+    public Page<ConsultaResponseDto> listarPersonalizado(Long medicoId, Long pacienteId, StatusConsulta status, LocalDate data, Pageable pageable) {
 
         if (medicoId != null && !medicoRepository.existsById(medicoId)) {
             throw new ElementoNaoEncontradoException("Não foi encontrado médico com id " + medicoId);
@@ -102,6 +103,9 @@ public class ConsultaService {
         }
         if (status != null) {
             spec = spec.and(ConsultaSpecs.comStatus(status));
+        }
+        if (data != null) {
+            spec = spec.and(ConsultaSpecs.comData(data));
         }
 
         return consultaRepository.findAll(spec, pageable).map(this::converterParaResponseDto);
