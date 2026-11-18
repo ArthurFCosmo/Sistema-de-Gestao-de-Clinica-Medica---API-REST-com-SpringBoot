@@ -4,7 +4,7 @@ Neste arquivos são armazenadas informações a respeito do desenvolvimento do p
 
 ---
 
-## Sprint 6: Implementação do filtro de consultas por data na entidade CONSULTA
+## Sprint 7: Implementação do filtro de consultas por data na entidade CONSULTA (Concluído)
 
 ### Contexto:
 
@@ -43,6 +43,12 @@ public static Specification<Consulta> comData(LocalDate data) {
 `cb.and` junta dois predicados com AND, eles são declarados como parâmetros.
 
 ### Commit:
+
+commit 5985e52ff9881d5fe742e2cef86f1a9d25155a48 (HEAD -> staging, origin/staging, origin/main, origin/HEAD, main)
+Author: Arthur Cosmo <arthurcosmoservices@gmail.com>
+Date:   Tue Nov 17 21:03:12 2026 -0300
+
+    Implementação do filtro de consultas por data + testes na entidade CONSULTA
 
 ### Próximo passo:
 

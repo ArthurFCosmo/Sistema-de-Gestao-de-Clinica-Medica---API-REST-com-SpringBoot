@@ -80,6 +80,20 @@ public class PrescricaoService {
         return converterParaResponseDto(prescricaoRepository.save(converterParaModel(id, dto)));
     }
 
+    // MÉTODOS DE CONSULTA PERSONALIZADOS -------------------------------------------------------------------------------
+
+    public PrescricaoResponseDto buscarPrescricaoPorConsultaId(Long consultaId) {
+
+        if (!consultaRepository.existsById(consultaId)) {
+            throw new ElementoNaoEncontradoException("Não foi encontrada consulta com id " + consultaId);
+        }
+
+        return converterParaResponseDto(prescricaoRepository.findByConsulta_Id(consultaId).orElseThrow(
+            () -> new ElementoNaoEncontradoException("Não foi encontrada prescrição para consulta com id " + consultaId)
+        ));
+
+    }
+
     // MÉTODOS DE CONVERSÃO DE ENTIDADES -------------------------------------------------------------------------------
 
     Prescricao converterParaModel(PrescricaoRequestDto dto) {

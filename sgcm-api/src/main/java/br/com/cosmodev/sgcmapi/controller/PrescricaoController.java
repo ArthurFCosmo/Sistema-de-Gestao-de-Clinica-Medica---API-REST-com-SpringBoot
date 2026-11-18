@@ -40,8 +40,18 @@ public class PrescricaoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PrescricaoResponseDto> atualizarPrescricao(@PathVariable Long id, @RequestBody @Valid PrescricaoRequestDto dto) {
+    public ResponseEntity<PrescricaoResponseDto> atualizarPrescricao(
+        @PathVariable Long id, 
+        @RequestBody @Valid PrescricaoRequestDto dto
+    ) {
         return ResponseEntity.ok(prescricaoService.atualizarPrescricao(id, dto));
+    }
+
+    // ENDPOINTS DE CONSULTA PERSONALIZADA ------------------------------------------------------------------------------------------------
+
+    @GetMapping("/consulta/{id}")
+    public ResponseEntity<PrescricaoResponseDto> buscarPrescricaoPorConsultaId(@PathVariable("id") Long idConsulta) {
+        return ResponseEntity.ok(prescricaoService.buscarPrescricaoPorConsultaId(idConsulta));
     }
 
 }

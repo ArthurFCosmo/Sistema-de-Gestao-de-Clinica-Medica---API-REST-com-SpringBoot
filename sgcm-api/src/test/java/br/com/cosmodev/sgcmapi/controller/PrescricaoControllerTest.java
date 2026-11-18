@@ -364,6 +364,53 @@ public class PrescricaoControllerTest {
 
     }
 
+    // TESTANDO CONSULTA PERSONALIZADA (GET "/prescricao/consulta/{id}") ------------------------------------------------
+
+    @Test
+    void deveRetornar200EPrescricaoPorConsultaIdNoGetPersonalizado() throws Exception {
+        when(prescricaoService.buscarPrescricaoPorConsultaId(1L)).thenReturn(respostaFalsa());
+
+        mockMvc.perform(get("/prescricao/consulta/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idConsulta").value(1))
+                .andExpect(jsonPath("$.descricao").value("Tratamento para hipertensão"));
+
+        verify(prescricaoService).buscarPrescricaoPorConsultaId(1L);
+    }
+
+    @Test
+    void deveRetornar404QuandoConsultaNaoExistirNoGetPersonalizado() throws Exception {
+        when(prescricaoService.buscarPrescricaoPorConsultaId(999L))
+                .thenThrow(new ElementoNaoEncontradoException("Não foi encontrada consulta com id 999"));
+
+        mockMvc.perform(get("/prescricao/consulta/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertInstanceOf(ElementoNaoEncontradoException.class, result.getResolvedException()));
+
+        verify(prescricaoService).buscarPrescricaoPorConsultaId(999L);
+    }
+
+    @Test
+    void deveRetornar404QuandoNaoExistirPrescricaoParaConsultaNoGetPersonalizado() throws Exception {
+        when(prescricaoService.buscarPrescricaoPorConsultaId(1L))
+                .thenThrow(new ElementoNaoEncontradoException("Não foi encontrada prescrição para consulta com id 1"));
+
+        mockMvc.perform(get("/prescricao/consulta/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertInstanceOf(ElementoNaoEncontradoException.class, result.getResolvedException()));
+
+        verify(prescricaoService).buscarPrescricaoPorConsultaId(1L);
+    }
+
+    @Test
+    void deveRetornar400SeConsultaIdNaoForNumericoNoGetPersonalizado() throws Exception {
+        mockMvc.perform(get("/prescricao/consulta/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertInstanceOf(MethodArgumentTypeMismatchException.class, result.getResolvedException()));
+
+        verify(prescricaoService, never()).buscarPrescricaoPorConsultaId(any());
+    }
+
     // ENTIDADES PRE MONTADAS E HELPERS PARA ELIMINAR BOILERPLATE ------------------------------------------------------
 
     private List<PrescricaoResponseDto> listaDeRespostasFalsas() {

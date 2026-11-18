@@ -354,6 +354,52 @@ public class PrescricaoServiceTest {
         verify(prescricaoRepository, never()).save(any(Prescricao.class));
     }
 
+    // TESTANDO CONSULTA PERSONALIZADA ----------------------------------------------------------------------------------
+
+    @Test
+    void deveBuscarPrescricaoPorConsultaIdComSucesso() {
+        Prescricao prescricao = prescricaoModelo(7L, prescricaoDto(), LocalDate.of(2030, 5, 10));
+        when(consultaRepository.existsById(1L)).thenReturn(true);
+        when(prescricaoRepository.findByConsulta_Id(1L)).thenReturn(Optional.of(prescricao));
+
+        PrescricaoResponseDto resultado = prescricaoService.buscarPrescricaoPorConsultaId(1L);
+
+        assertAll(
+                () -> assertEquals(7L, resultado.id()),
+                () -> assertEquals(1L, resultado.idConsulta()),
+                () -> assertEquals("Tratamento para dor", resultado.descricao())
+        );
+        verify(consultaRepository).existsById(1L);
+        verify(prescricaoRepository).findByConsulta_Id(1L);
+    }
+
+    @Test
+    void deveLancarExceptionCasoConsultaNaoExistaNaBuscaPersonalizada() {
+        when(consultaRepository.existsById(999L)).thenReturn(false);
+
+        ElementoNaoEncontradoException exception = assertThrows(
+                ElementoNaoEncontradoException.class,
+                () -> prescricaoService.buscarPrescricaoPorConsultaId(999L)
+        );
+
+        assertEquals("Não foi encontrada consulta com id 999", exception.getMessage());
+        verify(prescricaoRepository, never()).findByConsulta_Id(anyLong());
+    }
+
+    @Test
+    void deveLancarExceptionCasoNaoExistaPrescricaoParaConsulta() {
+        when(consultaRepository.existsById(1L)).thenReturn(true);
+        when(prescricaoRepository.findByConsulta_Id(1L)).thenReturn(Optional.empty());
+
+        ElementoNaoEncontradoException exception = assertThrows(
+                ElementoNaoEncontradoException.class,
+                () -> prescricaoService.buscarPrescricaoPorConsultaId(1L)
+        );
+
+        assertEquals("Não foi encontrada prescrição para consulta com id 1", exception.getMessage());
+        verify(prescricaoRepository).findByConsulta_Id(1L);
+    }
+
     // ENTIDADES PRE MONTADAS PARA ELIMINAR BOILERPLATE ----------------------------------------------------------------
 
     private Prescricao prescricaoModelo(Long id, PrescricaoRequestDto dto, LocalDate dataEmissao) {
