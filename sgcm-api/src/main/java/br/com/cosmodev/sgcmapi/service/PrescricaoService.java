@@ -10,11 +10,11 @@ import br.com.cosmodev.sgcmapi.model.Prescricao;
 import br.com.cosmodev.sgcmapi.repository.ConsultaRepository;
 import br.com.cosmodev.sgcmapi.repository.PrescricaoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.List;
-
 import static br.com.cosmodev.sgcmapi.service.UtilsSgcm.formatarCrm;
 
 @Service
@@ -49,8 +49,8 @@ public class PrescricaoService {
         );
     }
 
-    public List<PrescricaoResponseDto> listarPrescricoes() {
-        return prescricaoRepository.findAll().stream().map(this::converterParaResponseDto).toList();
+    public Page<PrescricaoResponseDto> listarPrescricoes(Pageable pageable) {
+        return prescricaoRepository.findAll(pageable).map(this::converterParaResponseDto);
     }
 
     public void deletarPrescricaoPeloId(Long id) {

@@ -25,6 +25,13 @@ Os testes dessas classes foram desenvolvidos/atualizados, e todos passaram.
 
 ### Commit:
 
+commit 3f6f031c0195f9c4338b07561007afdb65995084 (HEAD -> staging, origin/staging, origin/main, origin/HEAD, main)
+Author: Arthur Cosmo <arthurcosmoservices@gmail.com>
+Date:   Wed Nov 18 20:38:30 2026 -0300
+
+    Novo endpoint get: consultar a prescricao pelo id da consulta
+
+
 ### Próximo passo:
 
 Por enquanto, todos os métodos de consulta personalizados exigidos foram implementados com sucesso.

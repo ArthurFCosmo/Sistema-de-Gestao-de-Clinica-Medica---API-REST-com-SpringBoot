@@ -14,6 +14,6 @@
 | 60%                     | [x]       | Camada Controller                              | 79 min  | seg 19/10/2026 11:07 |
 | 70%                     | [x]       | Testes unitários do Controller                 | 340 min | qua 04/11/2026 22:19 |
 | 75%                     | [x]       | Tratamento de exceções + testes                | 176 min |                      |
-| 80%                     | [ ]       | Queries personalizadas                         |         |                      |
+| 80%                     | [x]       | Queries personalizadas                         |   ? min |                      |
 | 83%                     | [ ]       | Swagger                                        |         |                      |
 | 100%                    | [ ]       | Security                                       |         |                      |

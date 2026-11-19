@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.mockito.ArgumentCaptor;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -20,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -163,35 +167,34 @@ public class PrescricaoControllerTest {
 
     @Test
     void deveRetornar200EListarPrescricoesNoGet() throws Exception {
+        when(prescricaoService.listarPrescricoes(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(listaDeRespostasFalsas()));
 
-        // PREPARAÇÃO: Retornando lista com todas as prescrições
-        when(prescricaoService.listarPrescricoes()).thenReturn(listaDeRespostasFalsas());
-
-        // CONFIRMAÇÃO
         mockMvc.perform(get("/prescricao"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].descricao").value("Tratamento para hipertensão"))
-                .andExpect(jsonPath("$[1].id").value(2))
-                .andExpect(jsonPath("$[1].descricao").value("Tratamento para alergia"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].descricao").value("Tratamento para hipertensão"))
+                .andExpect(jsonPath("$.content[1].id").value(2))
+                .andExpect(jsonPath("$.content[1].descricao").value("Tratamento para alergia"));
 
-        verify(prescricaoService).listarPrescricoes();
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(prescricaoService).listarPrescricoes(pageableCaptor.capture());
+        assertEquals(20, pageableCaptor.getValue().getPageSize());
 
     }
 
     @Test
     void deveRetornar200EListaVaziaNoGet() throws Exception {
 
-        // PREPARAÇÃO: Retornando lista vazia de prescrições
-        when(prescricaoService.listarPrescricoes()).thenReturn(Collections.emptyList());
+        when(prescricaoService.listarPrescricoes(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
 
-        // CONFIRMAÇÃO
         mockMvc.perform(get("/prescricao"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
 
-        verify(prescricaoService).listarPrescricoes();
+        verify(prescricaoService).listarPrescricoes(any(Pageable.class));
 
     }
 

@@ -12,6 +12,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -169,24 +173,22 @@ public class EspecialidadeServiceTest {
 
         List<Especialidade> listaDeEspecialidadesCorretas = List.of(especialidadeSalvaFalsa1, especialidadeSalvaFalsa2);
 
-        // Preparação: Mockando lista de especialidades que virá como modelos diretamente do bd
-        when(especialidadeRepository.findAll()).thenReturn(listaDeEspecialidadesCorretas);
+        Pageable pageable = PageRequest.of(0, 20);
+        when(especialidadeRepository.findAll(pageable))
+                .thenReturn(new PageImpl<>(listaDeEspecialidadesCorretas, pageable, 2));
 
-
-        // Execução
-        List<EspecialidadeResponseDto> resultado = especialidadeService.listarEspecialidades();
+        Page<EspecialidadeResponseDto> resultado = especialidadeService.listarEspecialidades(pageable);
 
         // Confirmação: Deve retornar uma lista de ResponsesDTO's montados corretamente
         assertAll(
                 () -> assertNotNull(resultado),
-                () -> assertEquals(2, resultado.size()),
-                () -> assertEquals("Cardiologista", resultado.get(0).nome()),
-                () -> assertEquals(1, resultado.get(0).id()),
-                () -> assertEquals("Oncologista", resultado.get(1).nome()),
-                () -> assertEquals(2, resultado.get(1).id())
+                () -> assertEquals(2, resultado.getTotalElements()),
+                () -> assertEquals("Cardiologista", resultado.getContent().get(0).nome()),
+                () -> assertEquals(1, resultado.getContent().get(0).id()),
+                () -> assertEquals("Oncologista", resultado.getContent().get(1).nome()),
+                () -> assertEquals(2, resultado.getContent().get(1).id())
         );
-
-        verify(especialidadeRepository, times(1)).findAll();
+        verify(especialidadeRepository).findAll(pageable);
 
     }
 
@@ -197,15 +199,15 @@ public class EspecialidadeServiceTest {
         // Preparação: Criando lista vazia e mockando o métodó do repository que trará ela
         List<Especialidade> listaVaziaDeEspecialidades = List.of();
 
-        when(especialidadeRepository.findAll()).thenReturn(listaVaziaDeEspecialidades);
+        Pageable pageable = PageRequest.of(0, 20);
+        when(especialidadeRepository.findAll(pageable))
+                .thenReturn(new PageImpl<>(listaVaziaDeEspecialidades, pageable, 0));
 
-        // Execução
-        List<EspecialidadeResponseDto> resultado = especialidadeService.listarEspecialidades();
+        Page<EspecialidadeResponseDto> resultado = especialidadeService.listarEspecialidades(pageable);
 
         //Confirmação
-        assertTrue(resultado.isEmpty());
-
-        verify(especialidadeRepository, times(1)).findAll();
+        assertTrue(resultado.getContent().isEmpty());
+        verify(especialidadeRepository).findAll(pageable);
     }
 
     // deletarEspecialidade() DELETE

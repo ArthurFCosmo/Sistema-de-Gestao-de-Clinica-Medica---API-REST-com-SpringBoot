@@ -5,11 +5,12 @@ import br.com.cosmodev.sgcmapi.dtos.PacienteResponseDto;
 import br.com.cosmodev.sgcmapi.service.PacienteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/paciente")
@@ -24,8 +25,10 @@ public class PacienteController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PacienteResponseDto>> listarPacientes() {
-        return ResponseEntity.ok(pacienteService.listarPacientes());
+    public ResponseEntity<Page<PacienteResponseDto>> listarPacientes(
+            @PageableDefault(size = 20, sort = "nome") Pageable pageable
+    ) {
+        return ResponseEntity.ok(pacienteService.listarPacientes(pageable));
     }
 
     @GetMapping("/{id}")

@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.mockito.ArgumentCaptor;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -18,6 +21,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -123,35 +127,34 @@ public class PacienteControllerTest {
 
     @Test
     void deveRetornar200EListarPacientesNoGet() throws Exception {
+        when(pacienteService.listarPacientes(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(listaDeRespostasFalsas()));
 
-        // PREPARAÇÃO: Retornando lista com todos os pacientes
-        when(pacienteService.listarPacientes()).thenReturn(listaDeRespostasFalsas());
-
-        // CONFIRMAÇÃO
         mockMvc.perform(get("/paciente"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].nome").value("Arthur Cosmo"))
-                .andExpect(jsonPath("$[1].id").value(2))
-                .andExpect(jsonPath("$[1].nome").value("Maria Silva"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].nome").value("Arthur Cosmo"))
+                .andExpect(jsonPath("$.content[1].id").value(2))
+                .andExpect(jsonPath("$.content[1].nome").value("Maria Silva"));
 
-        verify(pacienteService).listarPacientes();
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(pacienteService).listarPacientes(pageableCaptor.capture());
+        assertEquals(20, pageableCaptor.getValue().getPageSize());
 
     }
 
     @Test
     void deveRetornar200EListaVaziaNoGet() throws Exception {
 
-        // PREPARAÇÃO: Retornando lista vazia de pacientes
-        when(pacienteService.listarPacientes()).thenReturn(Collections.emptyList());
+        when(pacienteService.listarPacientes(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
 
-        // CONFIRMAÇÃO
         mockMvc.perform(get("/paciente"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
 
-        verify(pacienteService).listarPacientes();
+        verify(pacienteService).listarPacientes(any(Pageable.class));
 
     }
 

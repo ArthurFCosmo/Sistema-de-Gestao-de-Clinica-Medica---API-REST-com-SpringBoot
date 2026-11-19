@@ -13,6 +13,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -245,34 +249,21 @@ public class PacienteServiceTest {
         List<Paciente> lista = List.of(pacienteModelFalsoCorreto1, pacienteModelFalsoCorreto2);
 
 
-        when(pacienteRepository.findAll()).thenReturn(lista);
+        Pageable pageable = PageRequest.of(0, 20);
+        when(pacienteRepository.findAll(pageable)).thenReturn(new PageImpl<>(lista, pageable, lista.size()));
 
-        //Execução
-
-        List<PacienteResponseDto> resultado = pacienteService.listarPacientes();
+        Page<PacienteResponseDto> resultado = pacienteService.listarPacientes(pageable);
 
         // Confirmação
         assertAll(
-                () -> assertFalse(resultado.isEmpty()),
-
-                () -> assertEquals(1L, resultado.get(0).id()),
-                () -> assertEquals("Arthur Cosmo", resultado.get(0).nome()),
-                () -> assertEquals("123.***.***-**", resultado.get(0).cpfMascarado()),
-                () -> assertEquals("arthur@email.com", resultado.get(0).email()),
-                () -> assertEquals("(11) 99999-9999", resultado.get(0).telefone()),
-                () -> assertEquals(36, resultado.get(0).idade()),
-                () -> assertEquals(true, resultado.get(0).ativo()),
-
-                () -> assertEquals(2L, resultado.get(1).id()),
-                () -> assertEquals("Arthur Silva", resultado.get(1).nome()),
-                () -> assertEquals("123.***.***-**", resultado.get(1).cpfMascarado()),
-                () -> assertEquals("arthursilva@email.com", resultado.get(1).email()),
-                () -> assertEquals("(11) 9999-9999", resultado.get(1).telefone()),
-                () -> assertEquals(36, resultado.get(1).idade()),
-                () -> assertEquals(true, resultado.get(1).ativo())
+                () -> assertFalse(resultado.getContent().isEmpty()),
+                () -> assertEquals(2, resultado.getTotalElements()),
+                () -> assertEquals(1L, resultado.getContent().get(0).id()),
+                () -> assertEquals("Arthur Cosmo", resultado.getContent().get(0).nome()),
+                () -> assertEquals(2L, resultado.getContent().get(1).id()),
+                () -> assertEquals("Arthur Silva", resultado.getContent().get(1).nome())
         );
-
-        verify(pacienteRepository, times(1)).findAll();
+        verify(pacienteRepository).findAll(pageable);
 
     }
 
@@ -280,20 +271,17 @@ public class PacienteServiceTest {
     void deveListarZeroPacientes() {
 
         // Preparação
-        List<Paciente> listaVazia = new ArrayList<>();
+        Pageable pageable = PageRequest.of(0, 20);
+        when(pacienteRepository.findAll(pageable)).thenReturn(new PageImpl<>(new ArrayList<>(), pageable, 0));
 
-        when(pacienteRepository.findAll()).thenReturn(listaVazia);
-
-        // Execução
-        List<PacienteResponseDto> resultado = pacienteService.listarPacientes();
+        Page<PacienteResponseDto> resultado = pacienteService.listarPacientes(pageable);
 
         // Confirmação
         assertAll(
                 () -> assertNotNull(resultado),
-                () -> assertTrue(resultado.isEmpty())
+                () -> assertTrue(resultado.getContent().isEmpty())
         );
-
-        verify(pacienteRepository, times(1)).findAll();
+        verify(pacienteRepository).findAll(pageable);
     }
 
     @Test

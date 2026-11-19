@@ -5,11 +5,12 @@ import br.com.cosmodev.sgcmapi.dtos.EspecialidadeResponseDto;
 import br.com.cosmodev.sgcmapi.service.EspecialidadeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 
 @RestController
@@ -25,8 +26,10 @@ public class EspecialidadeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EspecialidadeResponseDto>> listarEspecalidades() {
-        return ResponseEntity.ok(especialidadeService.listarEspecialidades());
+    public ResponseEntity<Page<EspecialidadeResponseDto>> listarEspecalidades(
+            @PageableDefault(size = 20, sort = "nome") Pageable pageable
+    ) {
+        return ResponseEntity.ok(especialidadeService.listarEspecialidades(pageable));
     }
 
     @GetMapping("/{id}")

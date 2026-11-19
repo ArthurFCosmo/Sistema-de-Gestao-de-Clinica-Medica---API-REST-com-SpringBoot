@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.mockito.ArgumentCaptor;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -19,6 +22,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -122,36 +126,34 @@ public class EspecialidadeControllerTest {
 
     @Test
     void deveRetornar200EListarEspecialidadesNoGet() throws Exception {
+        when(especialidadeService.listarEspecialidades(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(listaDeRespostasFalsas()));
 
-        // PREPARAÇÃO: Retornando lista com todas as especialidades
-        when(especialidadeService.listarEspecialidades()).thenReturn(listaDeRespostasFalsas());
-
-        // CONFIRMAÇÃO
         mockMvc.perform(get("/especialidade"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].nome").value("Cardiologista"))
-                .andExpect(jsonPath("$[1].id").value(2))
-                .andExpect(jsonPath("$[1].nome").value("Oncologista"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].nome").value("Cardiologista"))
+                .andExpect(jsonPath("$.content[1].id").value(2))
+                .andExpect(jsonPath("$.content[1].nome").value("Oncologista"));
 
-        verify(especialidadeService).listarEspecialidades();
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(especialidadeService).listarEspecialidades(pageableCaptor.capture());
+        assertEquals(20, pageableCaptor.getValue().getPageSize());
 
     }
 
     @Test
     void deveRetornar200EListaVaziaNoGet() throws Exception {
 
-        // PREPARAÇÃO: Retornando lista com todas as especialidades
-        when(especialidadeService.listarEspecialidades()).thenReturn(Collections.emptyList());
+        when(especialidadeService.listarEspecialidades(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
 
-        // CONFIRMAÇÃO
         mockMvc.perform(get("/especialidade"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
 
-
-        verify(especialidadeService).listarEspecialidades();
+        verify(especialidadeService).listarEspecialidades(any(Pageable.class));
 
     }
 

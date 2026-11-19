@@ -16,6 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -230,30 +234,35 @@ public class PrescricaoServiceTest {
                 1L,
                 null
         ), LocalDate.of(2030, 5, 11));
-        when(prescricaoRepository.findAll()).thenReturn(List.of(primeiraPrescricao, segundaPrescricao));
+        Pageable pageable = PageRequest.of(0, 20);
+        List<Prescricao> prescricoes = List.of(primeiraPrescricao, segundaPrescricao);
+        when(prescricaoRepository.findAll(pageable))
+                .thenReturn(new PageImpl<>(prescricoes, pageable, prescricoes.size()));
 
-        List<PrescricaoResponseDto> resultado = prescricaoService.listarPrescricoes();
+        Page<PrescricaoResponseDto> resultado = prescricaoService.listarPrescricoes(pageable);
 
         assertAll(
-                () -> assertEquals(2, resultado.size()),
-                () -> assertEquals(7L, resultado.get(0).id()),
-                () -> assertEquals("Tratamento para dor", resultado.get(0).descricao()),
-                () -> assertEquals(8L, resultado.get(1).id()),
-                () -> assertEquals("Tratamento para alergia", resultado.get(1).descricao()),
-                () -> assertEquals("Loratadina 10mg", resultado.get(1).medicamentos())
+                () -> assertEquals(2, resultado.getTotalElements()),
+                () -> assertEquals(7L, resultado.getContent().get(0).id()),
+                () -> assertEquals("Tratamento para dor", resultado.getContent().get(0).descricao()),
+                () -> assertEquals(8L, resultado.getContent().get(1).id()),
+                () -> assertEquals("Tratamento para alergia", resultado.getContent().get(1).descricao()),
+                () -> assertEquals("Loratadina 10mg", resultado.getContent().get(1).medicamentos())
         );
-        verify(prescricaoRepository).findAll();
+        verify(prescricaoRepository).findAll(pageable);
     }
 
     @Test
     void deveListarZeroPrescricoes() {
-        when(prescricaoRepository.findAll()).thenReturn(List.of());
+        Pageable pageable = PageRequest.of(0, 20);
+        when(prescricaoRepository.findAll(pageable))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
-        List<PrescricaoResponseDto> resultado = prescricaoService.listarPrescricoes();
+        Page<PrescricaoResponseDto> resultado = prescricaoService.listarPrescricoes(pageable);
 
         assertNotNull(resultado);
-        assertTrue(resultado.isEmpty());
-        verify(prescricaoRepository).findAll();
+        assertTrue(resultado.getContent().isEmpty());
+        verify(prescricaoRepository).findAll(pageable);
     }
 
     @Test

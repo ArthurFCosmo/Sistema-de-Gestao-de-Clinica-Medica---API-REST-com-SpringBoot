@@ -9,9 +9,9 @@ import br.com.cosmodev.sgcmapi.model.Paciente;
 import br.com.cosmodev.sgcmapi.repository.ConsultaRepository;
 import br.com.cosmodev.sgcmapi.repository.PacienteRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 import static br.com.cosmodev.sgcmapi.service.UtilsSgcm.*;
 
@@ -38,8 +38,8 @@ public class PacienteService {
         return converterParaResponseDto(paciente);
     }
 
-    public List<PacienteResponseDto> listarPacientes() {
-        return pacienteRepository.findAll().stream().map(this::converterParaResponseDto).toList();
+    public Page<PacienteResponseDto> listarPacientes(Pageable pageable) {
+        return pacienteRepository.findAll(pageable).map(this::converterParaResponseDto);
     }
 
     public void deletarPaciente(Long id) {

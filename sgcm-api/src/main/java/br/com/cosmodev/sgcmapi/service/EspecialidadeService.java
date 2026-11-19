@@ -8,9 +8,9 @@ import br.com.cosmodev.sgcmapi.model.Especialidade;
 import br.com.cosmodev.sgcmapi.repository.EspecialidadeRepository;
 import br.com.cosmodev.sgcmapi.repository.MedicoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 
 @Service
@@ -38,8 +38,8 @@ public class EspecialidadeService {
         return converterParaResponseDto(especialidade);
     }
 
-    public List<EspecialidadeResponseDto> listarEspecialidades() {
-        return especialidadeRepository.findAll().stream().map(this::converterParaResponseDto).toList();
+    public Page<EspecialidadeResponseDto> listarEspecialidades(Pageable pageable) {
+        return especialidadeRepository.findAll(pageable).map(this::converterParaResponseDto);
     }
 
     public void deletarEspecialidade(Long id) {
